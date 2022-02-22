@@ -68,44 +68,47 @@ impl Application<'_> {
             theme_prefer_light_mode: true,
         }
     }
-
-    // fn configure_fonts(&self, ctx: &egui::CtxRef) {
-    //     let mut font_def = egui::FontDefinitions::default();
-    //     // font_def.font_data.insert(
-    //     //     "Droid".to_owned(),
-    //     //     egui::FontData::from_static(include_bytes!(
-    //     //         "../Droid Sans Mono Nerd Font Complete Mono.otf"
-    //     //     )),
-    //     // );
-
-    //     //font_def.families
-    //     // font_def.families.insert(
-    //     //     eframe::egui::FontFamily::Monospace,
-    //     // );
-    //     // font_def.font_data.insert(
-    //     //     eframe::egui::TextStyle::Body.to_string(),
-    //     //     (egui::FontData::egui::FontData { font: (), index: (), tweak: () }),
-    //     // );
-    //     // font_def
-    //     //     .fonts_for_family
-    //     //     .get_mut(&egui::FontFamily::Proportional)
-    //     //     .unwrap()
-    //     //     .insert(0, "Droid".to_string());
-    //     ctx.set_fonts(font_def);
-    // }
-
+ 
     fn drop_down_sort_by(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered_justified(|ui| {});
+        //ui.vertical_centered_justified(|ui| {});
 
+        //ui.add(toggle(&mut self.ctrl_skip_display_dupes));
+        // ui.add_sized([100.0,10.0], egui::ComboBox::from_label("").show_index(
+        //                        ui,
+        //                 &mut self.sort_left_panel_index,
+        //                 self.sort_left_panel.len(),
+        //                 |i| self.sort_left_panel[i].to_owned(),
+        // ));
+  
+        // let x = egui::ComboBox::from_label("label")
+        // .width(137.0) 
+        // .show_index(
+        //     ui,
+        //     &mut self.sort_left_panel_index,
+        //     self.sort_left_panel.len(),
+        //     |i| self.sort_left_panel[i].to_owned(),
+        // );
+ 
+        // if ui.add_sized([100.0, 35.0], egui::ComboBox::new("sdfd", "label") 
+        //     .show_index(
+        //         ui,
+        //         &mut self.sort_left_panel_index,
+        //         self.sort_left_panel.len(),
+        //         |i| self.sort_left_panel[i].to_owned(),
+        //     ))
+        //     .clicked(){}
+    
+
+ 
         egui::Grid::new("grid_hide_singles")
             .striped(true)
             .num_columns(2)
             //.spacing(egui::Vec2::new(16.0, 20.0))
             .show(ui, |ui| {
                 //ui.label("Hide Singles");
-
-                if egui::ComboBox::from_label("")
-                    .width(137.0)
+ 
+                if egui::ComboBox::new("siome123","")
+                    .width(137.0) 
                     .show_index(
                         ui,
                         &mut self.sort_left_panel_index,
@@ -116,6 +119,9 @@ impl Application<'_> {
                 {
                      
                 };
+
+
+
                 ui.end_row();
                 ui.add(toggle(&mut self.ctrl_skip_display_dupes));
                 ui.end_row();
@@ -246,10 +252,7 @@ impl Application<'_> {
                         enums::enums::FileType::None => {},
                         enums::enums::FileType::All => {},
                     }
-                    //title = format!(" 🖼  {}", comparison_vec[row].0); //▶
-
-
-
+                  
                     title = truncate(&title, 110).to_string();
 
                     let diff = 115 - title.chars().count();
@@ -266,28 +269,67 @@ impl Application<'_> {
                     ]
                     .join("   ");
 
-                    ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-                        //ui.add_space(PADDING);
-                        if ui
-                            .add(
-                                egui::Button::new(
-                                    egui::RichText::new(title)
-                                        //.color(egui::Color32::WHITE)
-                                        .color(egui::Color32::from_rgb(48,48,48))
-                                        //.size(14.5)
-                                        //.raised()
-                                        .monospace(),
+                    if self.theme_prefer_light_mode == true {
+                        //Light Mode
+                        let mut style: egui::Style = (*_ctx.style()).clone();
+                        //style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
+                        style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                   
+                        _ctx.set_style(style);
+ 
+
+                        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+                            ui.set_height(35.);
+                            if ui
+                                .add_sized([1000.0, 35.0],
+                                    egui::Button::new(
+                                        egui::RichText::new(title)
+                                            //.color(egui::Color32::WHITE)
+                                            .color(egui::Color32::from_rgb(48,48,48))
+                                            //.size(14.5)
+                                            //.raised()
+                                            .monospace(),
+                                    ).frame(true)
+                                    .fill(egui::Color32::from_rgb(228, 244, 252)), //137, 207, 240,// 45, 51, 59
                                 )
-                                .fill(egui::Color32::from_rgb(228, 244, 252)), //137, 207, 240,// 45, 51, 59
-                            )
-                            .clicked()
-                        { 
-                            let image_path = comparison_vec[row].3[0].path.clone();
-                            //self.create_image_texture(ctx, &image_path, ui);
-                            self.selected_collection = comparison_vec[row].4.to_string();
-                            self.c = comparison_vec[row].3.to_vec(); 
-                        }
-                    }); 
+                                .clicked()
+                            { 
+                                let image_path = comparison_vec[row].3[0].path.clone();
+                                //self.create_image_texture(ctx, &image_path, ui);
+                                self.selected_collection = comparison_vec[row].4.to_string();
+                                self.c = comparison_vec[row].3.to_vec(); 
+                            }
+                        }); 
+                    } else {
+                        //Dark Mode
+                        let mut style: egui::Style = (*_ctx.style()).clone();
+                        //style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
+                        style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                   
+                        _ctx.set_style(style);
+
+                        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+                            ui.set_height(35.);
+                            if ui
+                                .add_sized([1200.0, 35.0],
+                                    egui::Button::new(
+                                        egui::RichText::new(title)
+                                            //.color(egui::Color32::WHITE)
+                                            //.color(egui::Color32::from_rgb(48,48,48))
+                                            //.size(14.5)
+                                            //.raised()
+                                            .monospace(),
+                                    )
+                                    //.fill(egui::Color32::from_rgb(228, 244, 252)), //137, 207, 240,// 45, 51, 59
+                                )
+                                .clicked()
+                            { 
+                                let image_path = comparison_vec[row].3[0].path.clone();
+                                //self.create_image_texture(ctx, &image_path, ui);
+                                self.selected_collection = comparison_vec[row].4.to_string();
+                                self.c = comparison_vec[row].3.to_vec(); 
+                            }
+                        }); 
+
+                    }
                 }
             }); //end of scroll
     }
@@ -415,7 +457,8 @@ impl Application<'_> {
             ))
             .clicked()
         {
-            //Remove file from os step one
+            //commented out for safe testing
+            /* //Remove file from os step one
             for collection in &self.b.data_set {
                 let (_, v) = collection;
                 for item in v {
@@ -435,144 +478,10 @@ impl Application<'_> {
                         || (x.status == FileAction::Read)
                         || (x.status == FileAction::Save)
                 });
-            }
+            } */
         };
     }
 
-    /* fn create_image_texture2(&mut self, _frame: &epi::Frame, path: &str) -> std::io::Result<()> {
-           //ui.image(self.texture, self.texture_size);
-           //ui.add(egui::ImageButton::new(self.texture.unwrap(), self.texture_size));
-           //if self.texture.is_none() {
-           // Load the image:
-
-           let f = std::fs::File::open(path)?;
-           let mut reader = std::io::BufReader::new(f);
-           let mut buffer = Vec::new();
-
-           // Read file into vector.
-           std::io::Read::read_to_end(&mut reader, &mut buffer)?;
-
-           let image_data = buffer;
-           use image::GenericImageView;
-           let image = image::load_from_memory(&image_data).expect("Failed to load image");
-           let image_buffer = image.to_rgba8();
-           let pixels = image_buffer.into_vec();
-           let size = [(image.width() / 1) as usize, (image.height() / 1) as usize];
-
-           let image = epi::Image::from_rgba_unmultiplied(size, &pixels);
-
-           // Allocate a texture:d
-           self.texture = Some(_frame.alloc_texture(image));
-           self.texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-           //ui.image(self.texture.unwrap(), self.texture_size);
-
-           //}
-           Ok(())
-       }
-    */
-
-    //std::io::Error
-    /* async fn create_image_texture(&mut self, path: &str) -> std::io::Result<(Vec<u8>,std::io::Error)> {
-        println!("async fn create_image_texture(&mut self, path: &str) -> std::io::Result<(Vec<u8>,std::io::Error)>");
-        //ui: &mut egui::Ui,
-        //ctx: &egui::Context,
-        //let a : Arc<Mutex<Server>> = Arc::new(Mutex::new(self));
-        //let mut selfm = a.lock().unwrap();
-
-        // Load the image:
-        fn load_image(image_data: &[u8]) -> Result<egui::ColorImage, image::ImageError> {
-            let image_data = image_data;
-            use image::GenericImageView;
-            let image = image::load_from_memory(&image_data).expect("Failed to load image");
-            let size = [(image.width() / 1) as usize, (image.height() / 1) as usize];
-            println!("size::{:?}", size);
-            let texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-            println!("texture_size::{:?}", texture_size);
-            let image_buffer = image.to_rgba8();
-            //let pixels = image_buffer.into_vec();
-            let pixels = image_buffer.as_flat_samples();
-
-            // Allocate a texture:d
-            // self.texture = Some(_frame.alloc_texture(image));
-            // self.texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-
-            // let image = image::load_from_memory(image_data)?;
-            // let size = [500, 500];
-            // let image_buffer = image.to_rgba8();
-            // let pixels = image_buffer.as_flat_samples();
-            Ok(egui::ColorImage::from_rgba_unmultiplied(
-                //[texture_size.x as usize, texture_size.y as usize],
-                size,
-                pixels.as_slice(),
-            ))
-        }
-
-        //TODO Concurrency Image
-
-        //let (sync_sender:SyncSender<i32>, receiver) = std::sync::mpsc::sync_channel(2);
-        ////let (tx, rx) = channel();
-
-        // let mut image_data: Vec<u8>;
-        let path: String = path.to_string();
-
-        // let tx = tx.clone();
-        // let handle3 = std::thread::spawn(move || {
-        //     println!("Inside1 -> thread::spawn1");
-
-        let f = std::fs::File::open(path);
-        match f {
-            Ok(f) => {
-                let mut reader = std::io::BufReader::new(f);
-                let mut buffer = Vec::new();
-                println!("Inside2");
-                // Read file into vector.
-                std::io::Read::read_to_end(&mut reader, &mut buffer)?;
-
-                //self.image = buffer;
-                println!("byte::{:#?}", &buffer);
-                //let mut image_data: Vec<u8> = buffer;
-
-                return Ok((buffer,std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "F1l3 N0t f0und",
-                )))
-
-                //self.image = image_data.clone();
-                //let image = load_image(&image_data).unwrap();
-
-                //println!("Inside3");
-                // let texture: &egui::TextureHandle = self.texture.get_or_insert_with(|| {
-                //     let image = load_image(include_bytes!("/Users/matthew/temp/foldera/t/IMG_0059.JPG")).unwrap();
-                //     ctx.load_texture("rust-logo", image)
-                // });
-
-                //println!("Inside4");
-                //ui.image(texture, texture.size_vec2());
-                //tx.send(image).unwrap();
-
-            }
-            Err(e) => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "F1l3 N0t f0und",
-                ))
-            }
-        }
-
-        //});
-        // let recieved: std::sync::mpsc::Receiver<i32> = rx.recv().unwrap();
-        // handle3.join().unwrap();
-        //End Concurrency
-
-        //println!("Inside4.");
-
-        // Allocate a texture:d
-        ////self.texture = Some(_frame.alloc_texture(recieved));
-        //self.texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-        //ui.image(self.texture.unwrap(), self.texture_size);
-
-        //Ok(())
-    } */
 }
 
 impl<'a> epi::App for Application<'a> {
@@ -650,22 +559,22 @@ impl<'a> epi::App for Application<'a> {
         //*************************************************************//
 
         let mut style: egui::Style = (*ctx.style()).clone();
-          //style.visuals.extreme_bg_color = egui::Color32::from_rgb(170, 46, 117);                 //???
-        //style.visuals.faint_bg_color = egui::Color32::from_rgb(255, 153, 0);                          //highlights toggle ui background
-        style.visuals.code_bg_color = egui::Color32::from_rgb(45, 51, 59);
+        // style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                  
+        // style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                           //highlights toggle ui background
+        // style.visuals.code_bg_color = egui::Color32::from_rgb(45, 51, 59);
         
-        style.visuals.hyperlink_color = egui::Color32::from_rgb(0,191,255);                    //hyperlinks
-        //style.visuals.override_text_color = Some(egui::Color32::from_rgb(60, 140, 161));              //Common Text (not text in main panel buttons)
-        //style.visuals.dark_mode = true;
-        //style.visuals.button_frame = true;
-        //style.visuals.collapsing_header_frame = true;                                                 //?
-        //style.visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(242, 242, 242);        //common background
-        style.visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(0., egui::Color32::from_rgb(45, 51, 59));
-          //style.visuals.widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
-        //style.visuals.widgets.inactive.bg_fill = egui::Color32::DARK_GREEN;
-        style.visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(211, 213, 213);         //moouseover 45, 51, 59)
-        //style.visuals.widgets.active.bg_fill = egui::Color32::from_rgb(45, 51, 59);                   //?
-        style.visuals.widgets.open.bg_fill = egui::Color32::from_rgb(45, 51, 59);
+        // style.visuals.hyperlink_color = egui::Color32::from_rgb(0,191,255);                    //hyperlinks
+        // style.visuals.override_text_color = Some(egui::Color32::from_rgb(45, 51, 59));            //Common Text (not text in main panel buttons)
+      
+        // style.visuals.button_frame = true;
+        // style.visuals.collapsing_header_frame = true;                                                 //?
+        // style.visuals.widgets.noninteractive.bg_fill = egui::Color32::DARK_RED;        //common background
+        // style.visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(0., egui::Color32::DARK_RED);
+        // style.visuals.widgets.inactive.bg_fill = egui::Color32::BROWN;
+        // style.visuals.widgets.inactive.bg_fill = egui::Color32::LIGHT_RED;        //moouseover!
+        // style.visuals.widgets.hovered.bg_fill = egui::Color32::YELLOW;            //moouseover!
+        // style.visuals.widgets.active.bg_fill = egui::Color32::GRAY;                 //?
+        // style.visuals.widgets.open.bg_fill = egui::Color32::GOLD;
         ctx.set_style(style);
 
         
@@ -731,7 +640,15 @@ impl<'a> epi::App for Application<'a> {
 
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+        let my_frame = egui::containers::Frame {
+            margin: egui::style::Margin { left: 10., right: 2., top: 5., bottom: 2. },
+            rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
+            shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
+            fill: Color32::LIGHT_BLUE,
+            stroke: egui::Stroke::new(0.0, Color32::GOLD),
+        };
+
+        egui::TopBottomPanel::top("top_panel").frame(my_frame).show(ctx, |ui| {
             ui.add_space(2.0);
 
             egui::Grid::new("some_unique_id").show(ui, |ui| {
@@ -845,6 +762,8 @@ impl<'a> epi::App for Application<'a> {
                     ))
                     .clicked()
                 { 
+                    ui.ctx().output().cursor_icon = egui::CursorIcon::Wait;
+
                     let path = std::env::current_dir().unwrap();
                     let res = rfd::FileDialog::new()
                         // .add_filter("text", &["txt", "rs"])
@@ -874,11 +793,15 @@ impl<'a> epi::App for Application<'a> {
                 ui.end_row();
             });
 
-            ui.add_space(1.0);
+            let sep = egui::Separator::default().spacing(5.);
+            //ui.add_sized([143.0, 1.0], sep);
+            ui.add(sep);
+
+           // ui.add_space(1.0);
         });
 
-        egui::SidePanel::left("my_side_panel").show(ctx, |ui| {
-            ui.add_space(7.0);
+        egui::SidePanel::left("my_side_panel").frame(my_frame).show(ctx, |ui| {
+            //ui.add_space(7.0);
 
             //DropDown SortBy
             ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
@@ -888,14 +811,14 @@ impl<'a> epi::App for Application<'a> {
             let sep = egui::Separator::default().spacing(5.);
             ui.add_sized([143.0, 1.0], sep);
  
-         
+          
             //Menu Filters
             ui.with_layout(egui::Layout::from_main_dir_and_cross_align(
                 egui::Direction::TopDown,
                 egui::Align::LEFT), |ui| {
                 //ui.set_height(20.);
                 if ui
-                    .add_sized([143.0, 1.0], egui::Button::new("All Files"))
+                    .add_sized([143.0, 100.0], egui::Button::new("All Files").frame(true))
                     .clicked()
                 {
                     self.ctrl_filter_filetype = enums::enums::FileType::All;
@@ -910,46 +833,47 @@ impl<'a> epi::App for Application<'a> {
 
                 }
             });
-            
-            let sep = egui::Separator::default().spacing(5.);
-             ui.add_sized([143.0, 1.0], sep);
+
+ 
+            // let sep = egui::Separator::default().spacing(5.);
+            //  ui.add_sized([143.0, 1.0], sep);
 
             //self.filters_filetype_counters
-            let title = format!("{}, {}", "Audio", self.filters_filetype_counters[0]);
+            let title = format!("{}::{}", "Audio", self.filters_filetype_counters[0]);
             if ui
-                .add_sized([143.0, 1.0], egui::Button::new(title))
+                .add_sized([143.0, 100.0], egui::Button::new(title))
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Audio;
             }
 
-            let title = format!("{}, {}", "Documents", self.filters_filetype_counters[1]);
+            let title = format!("{}::{}", "Documents", self.filters_filetype_counters[1]);
             if ui
-                .add_sized([143.0, 1.0], egui::Button::new(title))
+                .add_sized([143.0, 100.0], egui::Button::new(title))
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Document;
             }
 
-            let title = format!("{}, {}", "Images", self.filters_filetype_counters[2]);
+            let title = format!("{}::{}", "Images", self.filters_filetype_counters[2]);
             if ui
-                .add_sized([143.0, 1.0], egui::Button::new(title))
+                .add_sized([143.0, 100.0], egui::Button::new(title))
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Image;
             } 
 
-            let title = format!("{}, {}", "Others", self.filters_filetype_counters[3]);
+            let title = format!("{}:{}", "Others", self.filters_filetype_counters[3]);
             if ui
-                .add_sized([143.0, 1.0], egui::Button::new(title))
+                .add_sized([143.0, 100.0], egui::Button::new(title))
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Other;
             }
 
-            let title = format!("{}, {}", "Videos", self.filters_filetype_counters[4]);
+            let title = format!("{}::{}", "Videos", self.filters_filetype_counters[4]);
             if ui
-                .add_sized([143.0, 1.0], egui::Button::new(title))
+                .add_sized([143.0, 100.0], egui::Button::new(title))
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Video;
@@ -964,7 +888,7 @@ impl<'a> epi::App for Application<'a> {
             }); // the temporary settings are reverted here */
         });
 
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+        egui::TopBottomPanel::bottom("bottom_panel").frame(my_frame).show(ctx, |ui| {
             //ui.set_height(20.);
             //ui.add_space(15.);
             ui.with_layout(egui::Layout::right_to_left(), |ui| {
@@ -974,9 +898,8 @@ impl<'a> epi::App for Application<'a> {
              ui.add_space(2.);
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            //ui.add_space(35.);
- 
+        egui::CentralPanel::default().frame(my_frame).show(ctx, |ui| {
+              
             ui.with_layout(
                 egui::Layout::from_main_dir_and_cross_align(
                     egui::Direction::RightToLeft,
