@@ -70,35 +70,6 @@ impl Application<'_> {
     }
  
     fn drop_down_sort_by(&mut self, ui: &mut egui::Ui) {
-        //ui.vertical_centered_justified(|ui| {});
-
-        //ui.add(toggle(&mut self.ctrl_skip_display_dupes));
-        // ui.add_sized([100.0,10.0], egui::ComboBox::from_label("").show_index(
-        //                        ui,
-        //                 &mut self.sort_left_panel_index,
-        //                 self.sort_left_panel.len(),
-        //                 |i| self.sort_left_panel[i].to_owned(),
-        // ));
-  
-        // let x = egui::ComboBox::from_label("label")
-        // .width(137.0) 
-        // .show_index(
-        //     ui,
-        //     &mut self.sort_left_panel_index,
-        //     self.sort_left_panel.len(),
-        //     |i| self.sort_left_panel[i].to_owned(),
-        // );
- 
-        // if ui.add_sized([100.0, 35.0], egui::ComboBox::new("sdfd", "label") 
-        //     .show_index(
-        //         ui,
-        //         &mut self.sort_left_panel_index,
-        //         self.sort_left_panel.len(),
-        //         |i| self.sort_left_panel[i].to_owned(),
-        //     ))
-        //     .clicked(){}
-    
-
  
         egui::Grid::new("grid_hide_singles")
             .striped(true)
@@ -107,8 +78,11 @@ impl Application<'_> {
             .show(ui, |ui| {
                 //ui.label("Hide Singles");
  
+                 
+                ui.add(toggle(&mut self.ctrl_skip_display_dupes));
+                ui.end_row();
                 if egui::ComboBox::new("siome123","")
-                    .width(137.0) 
+                    .width(136.0) 
                     .show_index(
                         ui,
                         &mut self.sort_left_panel_index,
@@ -118,16 +92,8 @@ impl Application<'_> {
                     .clicked()
                 {
                      
-                };
-
-
-
-                ui.end_row();
-                ui.add(toggle(&mut self.ctrl_skip_display_dupes));
-                ui.end_row();
- 
-                // ui.label("Delete");
-                // ui.add(toggle(&mut self.ctrl_remove_mode)); 
+                }; 
+                ui.end_row();  
             });
     }
 
@@ -235,19 +201,19 @@ impl Application<'_> {
 
                     match comparison_vec[row].5{
                         enums::enums::FileType::Image => {
-                            title = format!(" 🖼 {}", comparison_vec[row].0);
+                            title = format!("🖼 {}", comparison_vec[row].0);
                         },
                         enums::enums::FileType::Audio => {
-                            title = format!(" 🎵  {}", comparison_vec[row].0);
+                            title = format!("🎵 {}", comparison_vec[row].0);
                         },
                         enums::enums::FileType::Video => {
-                            title = format!(" 🎞  {}", comparison_vec[row].0);
+                            title = format!("🎞 {}", comparison_vec[row].0);
                         },
                         enums::enums::FileType::Document => {
-                            title = format!(" 📎 {}", comparison_vec[row].0);
+                            title = format!("📎 {}", comparison_vec[row].0);
                         },
                         enums::enums::FileType::Other => {
-                            title = format!(" 📝  {}", comparison_vec[row].0);
+                            title = format!("📝 {}", comparison_vec[row].0);
                         },
                         enums::enums::FileType::None => {},
                         enums::enums::FileType::All => {},
@@ -261,6 +227,10 @@ impl Application<'_> {
                         space.push(' ');
                     }
 
+                    let test_name = title.clone();
+                    let test_file_count = text_file_count.clone();
+                    let test_adjusted_byte = adjusted_byte.clone();
+
                     title = [
                         title.to_string(),
                         space,
@@ -272,12 +242,36 @@ impl Application<'_> {
                     if self.theme_prefer_light_mode == true {
                         //Light Mode
                         let mut style: egui::Style = (*_ctx.style()).clone();
-                        //style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
-                        style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                   
+                        style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
+                        style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
                         _ctx.set_style(style);
  
 
-                        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+                         egui::Grid::new("grid_main_labels")
+                                .striped(true)
+                                .num_columns(3)
+                                .spacing(egui::Vec2::new(0.0, 10.0))
+                                .show(ui, |ui| {
+                                    if ui
+                                        .add_sized([900.0, 35.0], egui::Button::new(test_name))
+                                        .clicked()
+                                    { 
+                                        let image_path = comparison_vec[row].3[0].path.clone();
+                                        //self.create_image_texture(ctx, &image_path, ui);
+                                        self.selected_collection = comparison_vec[row].4.to_string();
+                                        self.c = comparison_vec[row].3.to_vec(); 
+                                    }
+                                    ui.add_sized([100.0, 35.0],egui::Button::new(
+                                        egui::RichText::new(test_file_count.to_string())
+                                        .color(egui::Color32::from_rgb(45, 51, 59))   
+                                    ));
+                                    ui.add_sized([100.0, 35.0],egui::Button::new(test_adjusted_byte.to_string()));
+                                    ui.end_row();   
+                                    // ui.label("Delete");
+                                    // ui.add(toggle(&mut self.ctrl_remove_mode)); 
+                                });  
+ 
+                        /* ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
                             ui.set_height(35.);
                             if ui
                                 .add_sized([1000.0, 35.0],
@@ -285,6 +279,7 @@ impl Application<'_> {
                                         egui::RichText::new(title)
                                             //.color(egui::Color32::WHITE)
                                             .color(egui::Color32::from_rgb(48,48,48))
+                                            .background_color(egui::Color32::from_rgb(255,255,255))
                                             //.size(14.5)
                                             //.raised()
                                             .monospace(),
@@ -297,13 +292,13 @@ impl Application<'_> {
                                 //self.create_image_texture(ctx, &image_path, ui);
                                 self.selected_collection = comparison_vec[row].4.to_string();
                                 self.c = comparison_vec[row].3.to_vec(); 
-                            }
-                        }); 
+                            }  
+                        }); */
                     } else {
                         //Dark Mode
                         let mut style: egui::Style = (*_ctx.style()).clone();
-                        //style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
-                        style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                   
+                        style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
+                        style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
                         _ctx.set_style(style);
 
                         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
@@ -379,7 +374,7 @@ impl Application<'_> {
 
                     //********************************************************//
  
-                    let t_counter = format!("{} ", ""); //. ▶
+                    let t_counter = format!("{}", &title); //. ▶
                     ui.horizontal(|ui| {
 
                         if ui.checkbox(&mut row.ui_event_status, t_counter).clicked() {
@@ -406,8 +401,14 @@ impl Application<'_> {
                                 }
                             }
 
+                            /* let modifiers = ui.ctx().input().modifiers;
+                            ui.ctx().output().open_url = Some(egui::output::OpenUrl {
+                                url: row.path.to_owned(),
+                                new_tab: modifiers.any(),
+                            }); */
+
                         };
-                        ui.hyperlink_to(&title, &row.path).on_hover_ui(|ui| {});
+                        ui.hyperlink_to("VIEW", &row.path).on_hover_ui(|ui| {});
                     });
 
                     counter += 1;
@@ -640,16 +641,39 @@ impl<'a> epi::App for Application<'a> {
 
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
 
-        let my_frame = egui::containers::Frame {
+        let my_frame1 = egui::containers::Frame {
             margin: egui::style::Margin { left: 10., right: 2., top: 5., bottom: 2. },
             rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
             shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
-            fill: Color32::LIGHT_BLUE,
+            fill: Color32::from_rgb(83, 115, 146),
             stroke: egui::Stroke::new(0.0, Color32::GOLD),
         };
 
-        egui::TopBottomPanel::top("top_panel").frame(my_frame).show(ctx, |ui| {
+        let my_frame2 = egui::containers::Frame {
+            margin: egui::style::Margin { left: 10., right: 2., top: 5., bottom: 2. },
+            rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
+            shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
+            fill: Color32::from_rgb(244,244,244),
+            stroke: egui::Stroke::new(0.0, Color32::GOLD),
+        };
+
+        egui::TopBottomPanel::top("top_panel").frame(my_frame2).show(ctx, |ui| {
             ui.add_space(2.0);
+
+
+            //USED FOR TESTING ALIGNMENT
+           /*  ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| { 
+                let flipped = ui.layout().horizontal_align() == egui::Align::LEFT;
+            
+                if ui
+                    .add_sized([143.0, 1.0], egui::Button::new("Temp Files"))
+                    .clicked()
+                {
+                    //do something
+                }
+            });
+ */
+           
 
             egui::Grid::new("some_unique_id").show(ui, |ui| {
                 //ui.set_min_height(50.);
@@ -739,7 +763,7 @@ impl<'a> epi::App for Application<'a> {
                 if ui
                     .checkbox(&mut self.filter_search_filetype[3], "Other")
                     .on_hover_ui(|ui| {
-                        ui.label("Extensions:: anything not covered by the other filters");
+                        ui.label("Extensions:: anything not covered by the other filters. Checking this box can significantly increase the search time.");
                     })
                     .clicked()
                 { 
@@ -800,7 +824,7 @@ impl<'a> epi::App for Application<'a> {
            // ui.add_space(1.0);
         });
 
-        egui::SidePanel::left("my_side_panel").frame(my_frame).show(ctx, |ui| {
+        egui::SidePanel::left("my_side_panel").frame(my_frame1).show(ctx, |ui| {
             //ui.add_space(7.0);
 
             //DropDown SortBy
@@ -808,8 +832,8 @@ impl<'a> epi::App for Application<'a> {
                 self.drop_down_sort_by(ui);
             });
 
-            let sep = egui::Separator::default().spacing(5.);
-            ui.add_sized([143.0, 1.0], sep);
+            // let sep = egui::Separator::default().spacing(5.);
+            // ui.add_sized([143.0, 1.0], sep);
  
           
             //Menu Filters
@@ -888,7 +912,7 @@ impl<'a> epi::App for Application<'a> {
             }); // the temporary settings are reverted here */
         });
 
-        egui::TopBottomPanel::bottom("bottom_panel").frame(my_frame).show(ctx, |ui| {
+        egui::TopBottomPanel::bottom("bottom_panel").frame(my_frame2).show(ctx, |ui| {
             //ui.set_height(20.);
             //ui.add_space(15.);
             ui.with_layout(egui::Layout::right_to_left(), |ui| {
@@ -898,7 +922,7 @@ impl<'a> epi::App for Application<'a> {
              ui.add_space(2.);
         });
 
-        egui::CentralPanel::default().frame(my_frame).show(ctx, |ui| {
+        egui::CentralPanel::default().frame(my_frame2).show(ctx, |ui| {
               
             ui.with_layout(
                 egui::Layout::from_main_dir_and_cross_align(
@@ -1135,3 +1159,5 @@ fn truncate(s: &str, max_chars: usize) -> &str {
                             //     let image = load_image(include_bytes!("/Users/matthew/temp/foldera/t/IMG_0059.JPG")).unwrap();
                             //     ctx.load_texture("rust-logo", image)
                             // });
+
+                             
