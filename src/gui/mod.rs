@@ -28,11 +28,7 @@ use byte_unit::{Byte};
 pub struct Application<'a> {
     a: finder::finder::Finder,
     b: finder::finder::Finder,
-    c: Vec<file::meta::Meta>,
-    //image: Vec<u8>,
-    //texture_size: egui::Vec2,
-    //texture: Option<egui::TextureId>,
-    //texture: Option<egui::TextureHandle>,
+    c: Vec<file::meta::Meta>, 
     selected_collection: String,
     sort_left_panel: [&'a str; 3],
     sort_left_panel_index: usize, 
@@ -50,18 +46,15 @@ impl Application<'_> {
         Self {
             a: finder::finder::Finder::new(),
             b: finder::finder::Finder::new(),
-            c: vec![file::meta::Meta::new()],
-            //image: vec![],
-            //texture_size: egui::Vec2::new(16.0, 9.0),
-            //texture: None,
+            c: vec![file::meta::Meta::new()], 
             selected_collection: String::from(""),
             sort_left_panel: ["Duplicates", "Name", "Size"],
             sort_left_panel_index: 0, 
             ctrl_starting_directory: "".to_string(), 
             ctrl_skip_display_dupes: true,
             ctrl_filter_filetype: enums::enums::FileType::All,
-            filter_search_filetype: [true, true, true, false, true], // [flag_audio,flag_document,flag_image,flag_other,flag_video]
-            filters_filetype_counters: [0;6],
+            filter_search_filetype: [true, true, true, false, true],    // [flag_audio,flag_document,flag_image,flag_other,flag_video]
+            filters_filetype_counters: [0;6],                           //[flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
             theme_prefer_light_mode: true,
             status_filetype_counters: false,
         }
@@ -1036,129 +1029,4 @@ fn truncate(s: &str, max_chars: usize) -> &str {
         Some((idx, _)) => &s[..idx],
     }
 }
-
-/* fn load_image(image_data: &[u8]) -> Result<egui::ColorImage, image::ImageError> {
-    let image_data = image_data;
-    use image::GenericImageView;
-    let image = image::load_from_memory(&image_data).expect("Failed to load image");
-    let size = [(image.width() / 1) as usize, (image.height() / 1) as usize];
-    println!("size::{:?}", size);
-    let texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-    println!("texture_size::{:?}", texture_size);
-    let image_buffer = image.to_rgba8();
-    //let pixels = image_buffer.into_vec();
-    let pixels = image_buffer.as_flat_samples();
-
-    // Allocate a texture:d
-    // self.texture = Some(_frame.alloc_texture(image));
-    // self.texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-
-    // let image = image::load_from_memory(image_data)?;
-    // let size = [500, 500];
-    // let image_buffer = image.to_rgba8();
-    // let pixels = image_buffer.as_flat_samples();
-    Ok(egui::ColorImage::from_rgba_unmultiplied(
-        //[texture_size.x as usize, texture_size.y as usize],
-        size,
-        pixels.as_slice(),
-    ))
-}
- */
-// ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-//     ui.button("I am becoming wider as needed");
-// });
-// ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-
-// match res {
-//     Some(_) => {
-//         let file = res.unwrap().clone().into_os_string().into_string();
-//         match file {
-//             Ok(file) => {
-//                 self.ctrl_starting_directory = file;
-//                 _frame.set_window_size(ctx.used_size());
-//             }
-//             Err(_) => {}
-//         };
-//     }
-//     None => {}
-// }
-
-// ui.horizontal_wrapped(|ui| {
-//     for i in 0..5 {
-//         ui.group(|ui| {
-//             ui.label(&format!("Item {}", i));
-//             ui.button("x");
-//         });
-//     }
-// });
-
-// for collection in &self.b.data_set {
-//     let (_, v) = collection;
-//     for item in v {
-//         if item.status == FileAction::Delete {
-
-//         }
-//     }
-// }
-
-// let collection = self.b.data_set.get_mut(&self.selected_collection).unwrap();
-// collection.retain(|x| {
-//     (x.status == FileAction::Empty)
-//         || (x.status == FileAction::Read)
-//         || (x.status == FileAction::Save)
-// });
-/* fn create_image_texture2(path: &str) -> Result<(eframe::epi::Image), String> {
-    //ui.image(self.texture, self.texture_size);
-    //ui.add(egui::ImageButton::new(self.texture.unwrap(), self.texture_size));
-
-    fn get_file_bytes(path: &str) -> std::io::Result<(Vec<u8>)> {
-        //-> Result<std::vec::Vec<u8>, _> { //Vec<u8>{
-
-        let f = std::fs::File::open(path)?;
-        let mut reader = std::io::BufReader::new(f);
-        let mut buffer = Vec::new();
-
-        // Read file into vector.
-        std::io::Read::read_to_end(&mut reader, &mut buffer)?;
-
-        Ok(buffer)
-    }
-
-    let image_data = get_file_bytes(path); //buffer;
-    match image_data {
-        Ok(byte_array) => {
-            use image::GenericImageView;
-            let image = image::load_from_memory(&byte_array).expect("Failed to load image");
-            let image_buffer = image.to_rgba8();
-            let pixels = image_buffer.into_vec();
-            let size = [(image.width() / 1) as usize, (image.height() / 1) as usize];
-
-            let image = epi::Image::from_rgba_unmultiplied(size, &pixels);
-
-            // Allocate a texture:d
-            //let texture = Some(_frame.alloc_texture(image));
-            //let texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-
-            //self.texture = Some(_frame.alloc_texture(image));
-            //self.texture_size = egui::Vec2::new((size[0] / 20) as f32, (size[1] / 20) as f32);
-
-            //ui.image(self.texture.unwrap(), self.texture_size);
-            //return Ok((texture, texture_size))
-            return Ok((image));
-        }
-        Err(_) => todo!(),
-    }
-}
- */
-
- /* let fa: f64 = self.ctrl_chunk_size;
-                            let mut ua: u32 = 0;
-                            ua = (fa.round() as u32);
-                            let chunk_size = ua as usize; */
-
- // let texture: &egui::TextureHandle = self.texture.get_or_insert_with(|| {
-                            //     let image = load_image(include_bytes!("/Users/matthew/temp/foldera/t/IMG_0059.JPG")).unwrap();
-                            //     ctx.load_texture("rust-logo", image)
-                            // });
-
-                             
+ 
