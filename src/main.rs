@@ -7,7 +7,7 @@ use crate::enums::enums::FileAction;
 use futures::executor; // 0.3.1
 use std::{
     sync::Arc,
-    time::{Duration, Instant},
+    time::{Instant},
 };
 
 fn return_dfer2(path: &str, filters:[bool;5]) -> finder::finder::Finder { 
@@ -20,7 +20,7 @@ fn return_dfer2(path: &str, filters:[bool;5]) -> finder::finder::Finder {
             // let mut filters = [true; 5];
             // filters[2] = false; //ignore images (ie test)
     //Block to connect to async values
-    let x = executor::block_on(ff.rayon_walk_dir(&path, filters));
+     executor::block_on(ff.rayon_walk_dir(&path, filters));
 
     ff.adjust_file_order();
     ff 
@@ -45,17 +45,17 @@ fn filter_hashmap_by_filetype(
 
 #[tokio::main]
 async fn main() {
-    let start = Instant::now();
+    //let start = Instant::now();
     let mut flag_filters = [true;5];
     flag_filters[3] = false;
     let dfer = return_dfer2("/Users/matthew/Documents/", flag_filters);
-    let mut d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::Document);
+    let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::Document);
     //println!("#len::{:#?}", d2.data_set.len());
 
-    ///flag_counters =  [flag_audio,flag_document,flag_image,flag_other,flag_video]
+    //  flag_counters =  [flag_audio,flag_document,flag_image,flag_other,flag_video]
     let mut flag_counters = [0;6];
     for collection in d2.data_set.iter(){
-        let (k,v) = collection;
+        let (_,v) = collection;
 
         for row in v{
             match row.file_type{
@@ -80,7 +80,7 @@ async fn main() {
         }
     }
     //println!("#flag_counters::{:#?}",flag_counters );
-    let duration = start.elapsed();
+    //let duration = start.elapsed();
 
     //*************************************************************************************************************************************/
     //sandbox();
@@ -93,7 +93,7 @@ async fn main() {
     //*************************************************************************************************************************************/
     //println!("#collections::{:#?}", dfer.data_set );
 
-    println!("Time elapsed in expensive_function() is: {:?}", duration);
+    //println!("Time elapsed in expensive_function() is: {:?}", duration);
 }
 
 fn spawnings() {

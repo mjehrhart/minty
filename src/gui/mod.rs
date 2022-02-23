@@ -1,71 +1,69 @@
-use crate::file::meta;
+//use crate::file::meta;
 
 use super::*;
-use egui::{CentralPanel, Color32, Context, ScrollArea};
-use egui::{Image, Style};
+use egui::{ Color32, ScrollArea};
+//use egui::{Image, Style};
 use file::meta::*;
-use std::sync::{Arc, Mutex};
-use std::{array, borrow::Cow, collections::HashMap, error::Error};
+//use std::sync::{Arc, Mutex};
+//use std::{array, borrow::Cow, collections::HashMap, error::Error};
+
+//use rayon::prelude::*;
 
 use eframe::{
     egui,
-    epi::{self, Frame, Storage},
+    epi::{self, Storage},
 };
 
-use tokio::io::{self, AsyncReadExt};
-use tokio::task;
-use tokio::{fs, join};
+//use tokio::io::{self, AsyncReadExt};
+// use tokio::task;
+// use tokio::{fs, join};
 
-use std::sync::mpsc::channel;
-use std::thread;
+//use std::sync::mpsc::channel;
+//use std::thread;
 
 extern crate byte_unit;
-use byte_unit::{Byte, ByteUnit};
- 
+use byte_unit::{Byte};
+
 #[derive(Clone)]
 pub struct Application<'a> {
+    a: finder::finder::Finder,
     b: finder::finder::Finder,
     c: Vec<file::meta::Meta>,
-    image: Vec<u8>,
-    texture_size: egui::Vec2,
+    //image: Vec<u8>,
+    //texture_size: egui::Vec2,
     //texture: Option<egui::TextureId>,
-    texture: Option<egui::TextureHandle>,
+    //texture: Option<egui::TextureHandle>,
     selected_collection: String,
     sort_left_panel: [&'a str; 3],
-    sort_left_panel_index: usize,
-    ctrl_chunk_size: f64,
-    ctrl_view_mode: bool,
-    ctrl_remove_mode: bool,
+    sort_left_panel_index: usize, 
     ctrl_skip_display_dupes: bool,
-    ctrl_starting_directory: String,
-    ctrl_bucket: &'a str,
+    ctrl_starting_directory: String, 
     ctrl_filter_filetype: enums::enums::FileType,
     filter_search_filetype: [bool; 5],
     filters_filetype_counters: [i32;6],
+    status_filetype_counters: bool,
     theme_prefer_light_mode: bool,
 }
 
 impl Application<'_> {
     pub fn default() -> Self {
         Self {
+            a: finder::finder::Finder::new(),
             b: finder::finder::Finder::new(),
             c: vec![file::meta::Meta::new()],
-            image: vec![],
-            texture_size: egui::Vec2::new(16.0, 9.0),
-            texture: None,
+            //image: vec![],
+            //texture_size: egui::Vec2::new(16.0, 9.0),
+            //texture: None,
             selected_collection: String::from(""),
             sort_left_panel: ["Duplicates", "Name", "Size"],
-            sort_left_panel_index: 0,
-            ctrl_chunk_size: 81920.,
-            ctrl_view_mode: false,
-            ctrl_remove_mode: false,
-            ctrl_starting_directory: "".to_string(),
-            ctrl_bucket: "",
+            sort_left_panel_index: 0, 
+            ctrl_starting_directory: "".to_string(), 
             ctrl_skip_display_dupes: true,
             ctrl_filter_filetype: enums::enums::FileType::All,
             filter_search_filetype: [true, true, true, false, true], // [flag_audio,flag_document,flag_image,flag_other,flag_video]
             filters_filetype_counters: [0;6],
             theme_prefer_light_mode: true,
+            status_filetype_counters: false,
         }
     }
  
@@ -98,34 +96,17 @@ impl Application<'_> {
     }
 
     fn left_side_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
-        
-        fn filter_hashmap_by_filetype(
-            mut d2: finder::finder::Finder,
-            ft: enums::enums::FileType,
-        ) -> finder::finder::Finder {
-            for collection in d2.data_set.clone().into_iter() {
-                let (k, mut v) = collection;
+   
+       
 
-                if ft != enums::enums::FileType::All {
-                    v.retain(|x| x.file_type == ft);
-
-                    if v.len() == 0 {
-                        d2.data_set.remove(&k);
-                    }
-                }
-            }
-
-            d2
-        }
-
-        let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+        //TODO check self.b and self.a references!!!
 
         let mut comparison_vec: Vec<(String, i32, String, Vec<Meta>, String, enums::enums::FileType)> = vec![];
-        //for mut item in self.b.data_set.iter_mut() {
-        for mut item in d2.data_set.clone().iter_mut() {
+        for item in self.a.data_set.iter() {
+        //for mut item in d2.data_set.clone().iter_mut() {
             //TODO maybe make mutable
             let (k, v) = item; 
-            if self.ctrl_skip_display_dupes == true {
+              if self.ctrl_skip_display_dupes == true {
                 if v.len() > 1 {
                     ///////
                     comparison_vec.push((
@@ -150,8 +131,7 @@ impl Application<'_> {
             }
         }
 
-        let row_height = 9.0;
-        let num_rows = comparison_vec.len();
+         
         match self.sort_left_panel_index {
             0 => {
                 comparison_vec.sort_by(|a, b| b.1.cmp(&a.1));
@@ -177,9 +157,12 @@ impl Application<'_> {
             _ => {}
         }
 
+        let row_height = 35.0;
+        let num_rows = comparison_vec.len();
+
         ScrollArea::vertical()
             .id_source("main_scroll")
-            .auto_shrink([false, false])
+            .auto_shrink([false, false]) 
             .max_height(500.)
             .stick_to_right()
             .show_rows(ui, row_height, num_rows, |ui, row_range| { 
@@ -192,13 +175,12 @@ impl Application<'_> {
                     let byte = Byte::from_bytes(a_total.try_into().unwrap());
                     let adjusted_byte = byte.get_appropriate_unit(false);
 
-                    let mut text_file_count = "      ".to_string();
+                    let mut text_file_count = String::from("");
                     if comparison_vec[row].1 > 1 {
                         text_file_count = format!("{} files", comparison_vec[row].1);
                     }
 
-                    let mut title: String = String::from("");
-
+                    let mut title: String = String::from(""); 
                     match comparison_vec[row].5{
                         enums::enums::FileType::Image => {
                             title = format!("🖼 {}", comparison_vec[row].0);
@@ -219,25 +201,34 @@ impl Application<'_> {
                         enums::enums::FileType::All => {},
                     }
                   
-                    title = truncate(&title, 110).to_string();
+                    //title
+                    title = truncate(&title, 150).to_string(); 
+                    let diff = 150 - title.chars().count(); 
+                    if diff > 0 {
+                        for _ in 0..=diff {
+                            title.push(' ');
+                        }
+                    } 
+                    //println!("title.len()::{}", &title.chars().count()); 
 
-                    let diff = 115 - title.chars().count();
-                    let mut space = " ".to_string();
+                    //adjusted_byte
+                    let diff = 10 - adjusted_byte.to_string().chars().count();  
+                    let mut space:String = String::from("");
                     for _ in 0..diff {
                         space.push(' ');
+
                     }
+                    let test_adjusted_byte = [space, adjusted_byte.to_string()].join("");
 
-                    let test_name = title.clone();
-                    let test_file_count = text_file_count.clone();
-                    let test_adjusted_byte = adjusted_byte.clone();
+                    //text_file_count
+                    let diff = 10 - text_file_count.to_string().chars().count();  
+                    let mut space:String = String::from("");
+                    for _ in 0..diff {
+                        space.push(' ');
 
-                    title = [
-                        title.to_string(),
-                        space,
-                        text_file_count,
-                        adjusted_byte.to_string(),
-                    ]
-                    .join("   ");
+                    }
+                    let test_file_count = [space, text_file_count.to_string()].join("");
+                       
 
                     if self.theme_prefer_light_mode == true {
                         //Light Mode
@@ -253,11 +244,9 @@ impl Application<'_> {
                                 .spacing(egui::Vec2::new(0.0, 10.0))
                                 .show(ui, |ui| {
                                     if ui
-                                        .add_sized([900.0, 35.0], egui::Button::new(test_name))
+                                        .add_sized([900.0, 35.0], egui::Button::new(truncate(&title, 122).to_string()))
                                         .clicked()
-                                    { 
-                                        let image_path = comparison_vec[row].3[0].path.clone();
-                                        //self.create_image_texture(ctx, &image_path, ui);
+                                    {  
                                         self.selected_collection = comparison_vec[row].4.to_string();
                                         self.c = comparison_vec[row].3.to_vec(); 
                                     }
@@ -266,34 +255,8 @@ impl Application<'_> {
                                         .color(egui::Color32::from_rgb(45, 51, 59))   
                                     ));
                                     ui.add_sized([100.0, 35.0],egui::Button::new(test_adjusted_byte.to_string()));
-                                    ui.end_row();   
-                                    // ui.label("Delete");
-                                    // ui.add(toggle(&mut self.ctrl_remove_mode)); 
-                                });  
- 
-                        /* ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-                            ui.set_height(35.);
-                            if ui
-                                .add_sized([1000.0, 35.0],
-                                    egui::Button::new(
-                                        egui::RichText::new(title)
-                                            //.color(egui::Color32::WHITE)
-                                            .color(egui::Color32::from_rgb(48,48,48))
-                                            .background_color(egui::Color32::from_rgb(255,255,255))
-                                            //.size(14.5)
-                                            //.raised()
-                                            .monospace(),
-                                    ).frame(true)
-                                    .fill(egui::Color32::from_rgb(228, 244, 252)), //137, 207, 240,// 45, 51, 59
-                                )
-                                .clicked()
-                            { 
-                                let image_path = comparison_vec[row].3[0].path.clone();
-                                //self.create_image_texture(ctx, &image_path, ui);
-                                self.selected_collection = comparison_vec[row].4.to_string();
-                                self.c = comparison_vec[row].3.to_vec(); 
-                            }  
-                        }); */
+                                    ui.end_row();    
+                                });   
                     } else {
                         //Dark Mode
                         let mut style: egui::Style = (*_ctx.style()).clone();
@@ -301,33 +264,40 @@ impl Application<'_> {
                         style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
                         _ctx.set_style(style);
 
-                        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-                            ui.set_height(35.);
+                        egui::Grid::new("grid_main_labels")
+                        .striped(true)
+                        .num_columns(3)
+                        .spacing(egui::Vec2::new(0.0, 10.0))
+                        .show(ui, |ui| { 
                             if ui
-                                .add_sized([1200.0, 35.0],
-                                    egui::Button::new(
-                                        egui::RichText::new(title)
-                                            //.color(egui::Color32::WHITE)
-                                            //.color(egui::Color32::from_rgb(48,48,48))
-                                            //.size(14.5)
-                                            //.raised()
-                                            .monospace(),
-                                    )
-                                    //.fill(egui::Color32::from_rgb(228, 244, 252)), //137, 207, 240,// 45, 51, 59
+                                .add_sized([900.0, 35.0],egui::Button::new(
+                                    egui::RichText::new(truncate(&title, 110).to_string())
+                                    .color(egui::Color32::from_rgb(45, 51, 59) ) )
+                                    .fill(egui::Color32::from_rgb(228, 244, 252))
                                 )
                                 .clicked()
-                            { 
-                                let image_path = comparison_vec[row].3[0].path.clone();
-                                //self.create_image_texture(ctx, &image_path, ui);
+                            {  
                                 self.selected_collection = comparison_vec[row].4.to_string();
                                 self.c = comparison_vec[row].3.to_vec(); 
                             }
+                            ui.add_sized([100.0, 35.0],egui::Button::new(
+                                egui::RichText::new(test_file_count.to_string())
+                                .color(egui::Color32::from_rgb(45, 51, 59) ) )
+                                .fill(egui::Color32::from_rgb(228, 244, 252))
+                            );
+                            ui.add_sized([100.0, 35.0],egui::Button::new(
+                                egui::RichText::new(test_adjusted_byte.to_string())
+                                .color(egui::Color32::from_rgb(45, 51, 59) ) )
+                                .fill(egui::Color32::from_rgb(228, 244, 252))
+                            );
+                            //ui.add_sized([100.0, 35.0],egui::Button::new(test_adjusted_byte.to_string()));
+                            ui.end_row();    
                         }); 
-
                     }
                 }
             }); //end of scroll
-    }
+     
+}
 
     fn bottom_side_panel(&mut self, ui: &mut egui::Ui) {
         ScrollArea::vertical()
@@ -336,7 +306,7 @@ impl Application<'_> {
             .max_height(200.)
             .stick_to_right()
             .show(ui, |ui| {
-                let mut counter = 1;
+                //let mut counter = 1;
                 for row in self.c.iter_mut() {
                     //********************************************************//
 
@@ -408,10 +378,10 @@ impl Application<'_> {
                             }); */
 
                         };
-                        ui.hyperlink_to("VIEW", &row.path).on_hover_ui(|ui| {});
+                        ui.hyperlink_to("VIEW", &row.path).on_hover_ui(|_ui| {});
                     });
 
-                    counter += 1;
+                    //counter += 1;
                 }
             }); //end of scroll
     }
@@ -483,6 +453,26 @@ impl Application<'_> {
         };
     }
 
+    fn configure_fonts(&mut self, _ctx: &egui::Context){
+        //let mut style: egui::Style = (*ctx.style()).clone();
+        // style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                  
+        // style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                           //highlights toggle ui background
+        // style.visuals.code_bg_color = egui::Color32::from_rgb(45, 51, 59);
+        
+        // style.visuals.hyperlink_color = egui::Color32::from_rgb(0,191,255);                    //hyperlinks
+        // style.visuals.override_text_color = Some(egui::Color32::from_rgb(45, 51, 59));            //Common Text (not text in main panel buttons)
+      
+        // style.visuals.button_frame = true;
+        // style.visuals.collapsing_header_frame = true;                                                 //?
+        // style.visuals.widgets.noninteractive.bg_fill = egui::Color32::DARK_RED;        //common background
+        // style.visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(0., egui::Color32::DARK_RED);
+        // style.visuals.widgets.inactive.bg_fill = egui::Color32::BROWN;
+        // style.visuals.widgets.inactive.bg_fill = egui::Color32::LIGHT_RED;        //moouseover!
+        // style.visuals.widgets.hovered.bg_fill = egui::Color32::YELLOW;            //moouseover!
+        // style.visuals.widgets.active.bg_fill = egui::Color32::GRAY;                 //?
+        // style.visuals.widgets.open.bg_fill = egui::Color32::GOLD;
+        //ctx.set_style(style);
+    }
 }
 
 impl<'a> epi::App for Application<'a> {
@@ -491,35 +481,22 @@ impl<'a> epi::App for Application<'a> {
     }
 
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
-        //self.configure_fonts(ctx);
-        fn filter_hashmap_by_filetype(
-            mut d2: finder::finder::Finder,
-            ft: enums::enums::FileType,
-        ) -> finder::finder::Finder {
-            for collection in d2.data_set.clone().into_iter() {
-                let (k, mut v) = collection;
-
-                if ft != enums::enums::FileType::All {
-                    v.retain(|x| x.file_type == ft);
-
-                    if v.len() == 0 {
-                        d2.data_set.remove(&k);
-                    }
-                }
-            }
-
-            d2
-        }
- 
-        let start = Instant::now();
-        let dfer = return_dfer2("/Users/matthew/zz/", self.filter_search_filetype);
+        
+        self.configure_fonts(ctx);
+     
+         
+        let dfer = return_dfer2("/Users/matthew/temp/", self.filter_search_filetype);
          
         println!("dfer::length::{:?}", &dfer.data_set.len());
+        let start = Instant::now();
         let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);
- 
-        //let mut flag_counters = [0;6];
+  
+        let duration = start.elapsed();
+        println!("Time elapsed in expensive_function() is: filter_hashmap_by_filetype {:?}", duration);
+
+        //let mut flag_counters = [0;6]; 
         for collection in d2.data_set.iter(){
-            let (k,v) = collection;
+            let (_,v) = collection;
 
             for row in v{
                 match row.file_type{
@@ -549,35 +526,17 @@ impl<'a> epi::App for Application<'a> {
             }
         }
 
+        let duration = start.elapsed();
+        println!("Time elapsed in expensive_function() is: .iter()::{:?}", duration);
+ 
         self.ctrl_starting_directory = "/Users/matthew/zz/".to_string(); 
-
-        //self.b = dfer;
+  
         self.b = d2;
         self.c = vec![];
 
-        let duration = start.elapsed();
-        println!("Time elapsed in expensive_function() is: {:?}", duration);
+         
         //*************************************************************//
-
-        let mut style: egui::Style = (*ctx.style()).clone();
-        // style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                  
-        // style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                           //highlights toggle ui background
-        // style.visuals.code_bg_color = egui::Color32::from_rgb(45, 51, 59);
-        
-        // style.visuals.hyperlink_color = egui::Color32::from_rgb(0,191,255);                    //hyperlinks
-        // style.visuals.override_text_color = Some(egui::Color32::from_rgb(45, 51, 59));            //Common Text (not text in main panel buttons)
-      
-        // style.visuals.button_frame = true;
-        // style.visuals.collapsing_header_frame = true;                                                 //?
-        // style.visuals.widgets.noninteractive.bg_fill = egui::Color32::DARK_RED;        //common background
-        // style.visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(0., egui::Color32::DARK_RED);
-        // style.visuals.widgets.inactive.bg_fill = egui::Color32::BROWN;
-        // style.visuals.widgets.inactive.bg_fill = egui::Color32::LIGHT_RED;        //moouseover!
-        // style.visuals.widgets.hovered.bg_fill = egui::Color32::YELLOW;            //moouseover!
-        // style.visuals.widgets.active.bg_fill = egui::Color32::GRAY;                 //?
-        // style.visuals.widgets.open.bg_fill = egui::Color32::GOLD;
-        ctx.set_style(style);
-
+ 
         
         //Light Theme
         //ctx.set_visuals(egui::Visuals::light());
@@ -675,14 +634,14 @@ impl<'a> epi::App for Application<'a> {
  */
            
 
-            egui::Grid::new("some_unique_id").show(ui, |ui| {
-                //ui.set_min_height(50.);
- 
+            egui::Grid::new("top_menu_grid").show(ui, |ui| {
+               
                 if ui
                     .add( egui::Button::new( egui::RichText::new("⎈ Run").color(egui::Color32::from_rgb(0,191,255)),
                     ))
                     .clicked()
                 {
+                    let start = Instant::now();
                     let dfer = return_dfer2(&self.ctrl_starting_directory, self.filter_search_filetype); 
                     let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);
                   
@@ -719,6 +678,8 @@ impl<'a> epi::App for Application<'a> {
                     }
 
                     self.b = d2;
+                    let duration = start.elapsed();
+                    println!("Time elapsed in expensive_function() is: (update) {:?}", duration);
                 }
 
                 if ui
@@ -794,7 +755,7 @@ impl<'a> epi::App for Application<'a> {
                         .set_directory(&path)
                         .pick_folder();
 
-                    let folder = match res {
+                    match res {
                         Some(_) => {
                             self.c = vec![]; 
                             let f = res.unwrap().clone().into_os_string().into_string(); 
@@ -824,30 +785,28 @@ impl<'a> epi::App for Application<'a> {
            // ui.add_space(1.0);
         });
 
-        egui::SidePanel::left("my_side_panel").frame(my_frame1).show(ctx, |ui| {
-            //ui.add_space(7.0);
-
+        egui::SidePanel::left("my_left_side_panel").frame(my_frame1).show(ctx, |ui| {
+           
             //DropDown SortBy
             ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
                 self.drop_down_sort_by(ui);
             });
-
-            // let sep = egui::Separator::default().spacing(5.);
-            // ui.add_sized([143.0, 1.0], sep);
  
-          
             //Menu Filters
             ui.with_layout(egui::Layout::from_main_dir_and_cross_align(
                 egui::Direction::TopDown,
-                egui::Align::LEFT), |ui| {
+                egui::Align::LEFT 
+            ), |ui| {
                 //ui.set_height(20.);
                 if ui
-                    .add_sized([143.0, 100.0], egui::Button::new("All Files").frame(true))
+                    .add_sized([143.0, 100.0], egui::Button::new("All Files"))
                     .clicked()
                 {
                     self.ctrl_filter_filetype = enums::enums::FileType::All;
+                    self.status_filetype_counters = true;
 
-                    // println!("copied_text::{:?}", ui.output().copied_text); //.copied_text = what_the_user_is_interested_in;
+                    let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                    self.a = d2;
 
                     // let modifiers = ui.ctx().input().modifiers;
                     // ui.ctx().output().open_url = Some(egui::output::OpenUrl {
@@ -856,12 +815,7 @@ impl<'a> epi::App for Application<'a> {
                     // });
 
                 }
-            });
-
- 
-            // let sep = egui::Separator::default().spacing(5.);
-            //  ui.add_sized([143.0, 1.0], sep);
-
+            }); 
             //self.filters_filetype_counters
             let title = format!("{}::{}", "Audio", self.filters_filetype_counters[0]);
             if ui
@@ -869,6 +823,10 @@ impl<'a> epi::App for Application<'a> {
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Audio;
+                self.status_filetype_counters = true;
+
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
             }
 
             let title = format!("{}::{}", "Documents", self.filters_filetype_counters[1]);
@@ -877,6 +835,10 @@ impl<'a> epi::App for Application<'a> {
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Document;
+                self.status_filetype_counters = true;
+
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
             }
 
             let title = format!("{}::{}", "Images", self.filters_filetype_counters[2]);
@@ -885,6 +847,10 @@ impl<'a> epi::App for Application<'a> {
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Image;
+                self.status_filetype_counters = true;
+
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
             } 
 
             let title = format!("{}:{}", "Others", self.filters_filetype_counters[3]);
@@ -893,6 +859,10 @@ impl<'a> epi::App for Application<'a> {
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Other;
+                self.status_filetype_counters = true;
+
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
             }
 
             let title = format!("{}::{}", "Videos", self.filters_filetype_counters[4]);
@@ -901,6 +871,10 @@ impl<'a> epi::App for Application<'a> {
                 .clicked()
             {
                 self.ctrl_filter_filetype = enums::enums::FileType::Video;
+                self.status_filetype_counters = true;
+
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
             }
 
             /* ui.scope(|ui| {
@@ -924,6 +898,31 @@ impl<'a> epi::App for Application<'a> {
 
         egui::CentralPanel::default().frame(my_frame2).show(ctx, |ui| {
               
+
+            //let layout = egui::Layout::from_main_dir_and_cross_align(egui::Direction::TopDown, egui::Align::LEFT);
+ 
+           /*  ui
+                .scope(|ui| {
+                    let background_frame =  egui::containers::Frame {
+                        margin: egui::style::Margin { left: 0., right: 0., top: 0., bottom: 0. },
+                        rounding: egui::Rounding { nw: 0.0, ne: 0.0, sw: 0.0, se: 0.0 },
+                        shadow: eframe::epaint::Shadow { extrusion: 1.0, color: Color32::YELLOW },
+                        fill: Color32::from_rgb(193, 195, 116),
+                        stroke: egui::Stroke::new(0.0, Color32::GOLD),
+                    };
+
+    
+                    //.multiply_with_opacity(config.background_alpha);
+                    background_frame
+                        .show(ui, |ui| {
+                             ui.add_sized([300.0, 35.0], egui::Button::new("test"));
+                        })
+                        .inner
+                })
+                .inner;
+            */
+
+
             ui.with_layout(
                 egui::Layout::from_main_dir_and_cross_align(
                     egui::Direction::RightToLeft,
@@ -961,7 +960,7 @@ fn filter_hashmap_by_filetype(
     mut d2: finder::finder::Finder,
     ft: enums::enums::FileType,
 ) -> finder::finder::Finder {
- 
+    let start = Instant::now();
     for collection in d2.data_set.clone().into_iter() {
         let (k, mut v) = collection;
  
@@ -974,12 +973,14 @@ fn filter_hashmap_by_filetype(
         }
     }
 
+    let duration = start.elapsed();
+        println!("Time elapsed:: filter_hashmap_by_filetype::{:?}", duration);
     d2
 }
 
  
 pub fn get_created_date(path: &str) -> std::io::Result<String> {
-    let metadata = match std::fs::metadata(path) {
+    let _metadata = match std::fs::metadata(path) {
         Ok(f) => {
             if let Ok(time) = f.created() {
                 let datetime: chrono::DateTime<chrono::Local> = time.into();
@@ -989,7 +990,7 @@ pub fn get_created_date(path: &str) -> std::io::Result<String> {
                 return Err(std::io::Error::new(std::io::ErrorKind::Other, "foo"));
             }
         }
-        Err(e) => {
+        Err(_e) => {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "F1l3 N0t f0und",

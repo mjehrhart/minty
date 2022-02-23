@@ -1,7 +1,7 @@
-use std::{
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+// use std::{
+//     path::PathBuf,
+//     sync::{Arc, Mutex},
+// };
 
 #[allow(unused)]
 use super::enums;
@@ -541,30 +541,4 @@ pub mod finder {
         std::any::type_name::<T>()
     }
 }
-
-pub fn walk_files_by_path(base_path: &std::path::Path) -> std::vec::Vec<PathBuf> {
-    let entries = Arc::new(Mutex::new(Vec::new()));
-
-    fn read_dir(entries: Arc<Mutex<Vec<PathBuf>>>, s: &rayon::Scope<'_>, base_path: PathBuf) {
-        for entry in std::fs::read_dir(base_path).unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            let metadata = entry.metadata().unwrap();
-            if metadata.is_dir() {
-                let move_entries = entries.clone();
-                s.spawn(move |s1| read_dir(move_entries, s1, path));
-            } else if metadata.is_file() {
-                let p = path.as_path().display().to_string();
-                entries.lock().unwrap().push(path);
-            }
-        }
-    }
-
-    let base_path = base_path.to_owned();
-    let move_entries = entries.clone();
-    let ret = rayon::scope(move |s| s.spawn(move |s1| read_dir(move_entries, s1, base_path)));
-
-    let entries = Arc::try_unwrap(entries).unwrap().into_inner().unwrap();
-    entries
-    // rayon::iter::IntoParallelIterator::into_par_iter(entries)
-}
+ 
