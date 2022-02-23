@@ -24,6 +24,18 @@ use eframe::{
 extern crate byte_unit;
 use byte_unit::{Byte};
 
+#[derive(Clone, Debug)]
+pub struct DupeTable {
+    a: String,
+    b: i32,
+    c: String,
+    d: Vec<Meta>,
+    e: String,
+    f: enums::enums::FileType
+}
+
+//TODO check self.b and self.a references!!!
+
 #[derive(Clone)]
 pub struct Application<'a> {
     a: finder::finder::Finder,
@@ -87,13 +99,44 @@ impl Application<'_> {
                 ui.end_row();  
             });
     }
+ 
+    fn configure_comparison_vec(&mut self, mut vec: Vec<DupeTable> ) -> Vec<DupeTable> {
+ 
+        let mut vec:Vec<DupeTable> = vec![];
+
+        for item in self.a.data_set.iter() {
+        //     //for mut item in d2.data_set.clone().iter_mut() { 
+            let (k, v) = item;  
+            if self.ctrl_skip_display_dupes == true {
+                if v.len() > 1 { 
+                    let dt = DupeTable{
+                        a: v[0].name.to_string(),
+                        b: v.len().try_into().unwrap(),
+                        c: k.to_string(),
+                        d: v.to_vec(),
+                        e: k.to_string(),
+                        f: v[0].file_type,
+                    }; 
+                    vec.push(dt);
+                } 
+            } else {
+                let dt = DupeTable{
+                    a: v[0].name.to_string(),
+                    b: v.len().try_into().unwrap(),
+                    c: k.to_string(),
+                    d: v.to_vec(),
+                    e: k.to_string(),
+                    f: v[0].file_type,
+                };
+                vec.push(dt); 
+            }  
+        }
+        vec
+    }
 
     fn left_side_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
-   
-       
-
-        //TODO check self.b and self.a references!!!
-
+    
+          
         let mut comparison_vec: Vec<(String, i32, String, Vec<Meta>, String, enums::enums::FileType)> = vec![];
         for item in self.a.data_set.iter() {
         //for mut item in d2.data_set.clone().iter_mut() {
@@ -124,6 +167,7 @@ impl Application<'_> {
             }
         }
 
+        println!("comparison_vec::{:?}", comparison_vec);
          
         match self.sort_left_panel_index {
             0 => {
@@ -228,16 +272,20 @@ impl Application<'_> {
                         let mut style: egui::Style = (*_ctx.style()).clone();
                         style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
                         style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
+ 
                         _ctx.set_style(style);
  
-
                          egui::Grid::new("grid_main_labels")
                                 .striped(true)
                                 .num_columns(3)
                                 .spacing(egui::Vec2::new(0.0, 10.0))
                                 .show(ui, |ui| {
                                     if ui
-                                        .add_sized([900.0, 35.0], egui::Button::new(truncate(&title, 122).to_string()))
+                                        .add_sized([900.0, 35.0],egui::Button::new(
+                                            egui::RichText::new(truncate(&title, 122).to_string())
+                                            .color(egui::Color32::from_rgb(45, 51, 59) ) )
+                                            .fill(egui::Color32::from_rgb(228, 244, 252))
+                                        )
                                         .clicked()
                                     {  
                                         self.selected_collection = comparison_vec[row].4.to_string();
@@ -245,9 +293,12 @@ impl Application<'_> {
                                     }
                                     ui.add_sized([100.0, 35.0],egui::Button::new(
                                         egui::RichText::new(test_file_count.to_string())
-                                        .color(egui::Color32::from_rgb(45, 51, 59))   
-                                    ));
-                                    ui.add_sized([100.0, 35.0],egui::Button::new(test_adjusted_byte.to_string()));
+                                        .color(egui::Color32::from_rgb(45, 51, 59)) )
+                                        .fill(egui::Color32::from_rgb(228, 244, 252)));
+                                    ui.add_sized([100.0, 35.0],egui::Button::new(
+                                        egui::RichText::new(test_adjusted_byte.to_string())
+                                        .color(egui::Color32::from_rgb(45, 51, 59)) )
+                                        .fill(egui::Color32::from_rgb(228, 244, 252))); 
                                     ui.end_row();    
                                 });   
                     } else {
@@ -264,7 +315,7 @@ impl Application<'_> {
                         .show(ui, |ui| { 
                             if ui
                                 .add_sized([900.0, 35.0],egui::Button::new(
-                                    egui::RichText::new(truncate(&title, 110).to_string())
+                                    egui::RichText::new(truncate(&title, 122).to_string())
                                     .color(egui::Color32::from_rgb(45, 51, 59) ) )
                                     .fill(egui::Color32::from_rgb(228, 244, 252))
                                 )
@@ -289,8 +340,9 @@ impl Application<'_> {
                     }
                 }
             }); //end of scroll
-     
-}
+       
+
+    }
 
     fn bottom_side_panel(&mut self, ui: &mut egui::Ui) {
         ScrollArea::vertical()
