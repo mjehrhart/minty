@@ -9,7 +9,7 @@ use file::meta::*;
 
 //use rayon::prelude::*;
 
-use eframe::{
+  use eframe::{
     egui,
     epi::{self, Storage},
 };
@@ -29,8 +29,7 @@ pub struct DupeTable {
     name: String,
     count: i32,
     checksum: String,
-    list: Vec<Meta>,
-    e: String,
+    list: Vec<Meta>, 
     file_type: enums::enums::FileType
 }
 
@@ -113,7 +112,6 @@ impl Application<'_> {
                         count: v.len().try_into().unwrap(),
                         checksum: k.to_string(),
                         list: v.to_vec(),
-                        e: k.to_string(),
                         file_type: v[0].file_type,
                     }; 
                     vec.push(dt);
@@ -124,7 +122,6 @@ impl Application<'_> {
                     count: v.len().try_into().unwrap(),
                     checksum: k.to_string(),
                     list: v.to_vec(),
-                    e: k.to_string(),
                     file_type: v[0].file_type,
                 };
                 vec.push(dt); 
@@ -162,17 +159,83 @@ impl Application<'_> {
             }
         }
         
-        fn get_table_fields() -> (){
+        fn get_table_fields(dt: DupeTable) -> (String, String, String){
+            let mut a_total = 0;
+            for item in &dt.list {
+                a_total += item.file_size;
+            }
 
+            let byte = Byte::from_bytes(a_total.try_into().unwrap());
+            let adjusted_byte = byte.get_appropriate_unit(false);
+
+            let mut text_file_count = String::from("");
+            if dt.count > 1 {
+                text_file_count = format!("{} files", dt.count);
+            }
+
+            let mut title: String = String::from(""); 
+            match dt.file_type{
+                enums::enums::FileType::Image => {
+                    title = format!("🖼 {}", dt.name);
+                },
+                enums::enums::FileType::Audio => {
+                    title = format!("🎵 {}", dt.name);
+                },
+                enums::enums::FileType::Video => {
+                    title = format!("🎞 {}", dt.name);
+                },
+                enums::enums::FileType::Document => {
+                    title = format!("📎 {}", dt.name);
+                },
+                enums::enums::FileType::Other => {
+                    title = format!("📝 {}", dt.name);
+                },
+                enums::enums::FileType::None => {},
+                enums::enums::FileType::All => {},
+            }
+          
+            //title
+            title = truncate(&title, 150).to_string(); 
+            let diff = 150 - title.chars().count(); 
+            if diff > 0 {
+                for _ in 0..=diff {
+                    title.push(' ');
+                }
+            } 
+            //println!("title.len()::{}", &title.chars().count()); 
+
+            //adjusted_byte
+            let diff = 10 - adjusted_byte.to_string().chars().count();  
+            let mut space:String = String::from("");
+            for _ in 0..diff {
+                space.push(' ');
+
+            }
+            let adjusted_byte = [space, adjusted_byte.to_string()].join("");
+
+            //text_file_count
+            let diff = 10 - text_file_count.to_string().chars().count();  
+            let mut space:String = String::from("");
+            for _ in 0..diff {
+                space.push(' ');
+
+            }
+            let text_file_count = [space, text_file_count.to_string()].join("");
             
+            (title, adjusted_byte, text_file_count)
         }
-        let  vec:Vec<DupeTable> = vec![];
-        let mut vec_dupe_table = self.configure_comparison_vec(vec);
- 
+         
+        //
+        let mut vec_table = self.configure_comparison_vec(vec![]); 
         let row_height = 35.0;
-        let num_rows = vec_dupe_table.len();
+        let num_rows = vec_table.len(); 
+        let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_table);
 
-        let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_dupe_table);
+        //Style
+        let mut style: egui::Style = (*_ctx.style()).clone();
+        style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
+        style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
+        _ctx.set_style(style);
 
         ScrollArea::vertical()
             .id_source("main_scroll")
@@ -181,100 +244,35 @@ impl Application<'_> {
             .stick_to_right()
             .show_rows(ui, row_height, num_rows, |ui, row_range| { 
                 for row in row_range {
-                    let mut a_total = 0;
-                    for item in &vec_dupe_table[row].list {
-                        a_total += item.file_size;
-                    }
-
-                    let byte = Byte::from_bytes(a_total.try_into().unwrap());
-                    let adjusted_byte = byte.get_appropriate_unit(false);
-
-                    let mut text_file_count = String::from("");
-                    if vec_dupe_table[row].count > 1 {
-                        text_file_count = format!("{} files", vec_dupe_table[row].count);
-                    }
-
-                    let mut title: String = String::from(""); 
-                    match vec_dupe_table[row].file_type{
-                        enums::enums::FileType::Image => {
-                            title = format!("🖼 {}", vec_dupe_table[row].name);
-                        },
-                        enums::enums::FileType::Audio => {
-                            title = format!("🎵 {}", vec_dupe_table[row].name);
-                        },
-                        enums::enums::FileType::Video => {
-                            title = format!("🎞 {}", vec_dupe_table[row].name);
-                        },
-                        enums::enums::FileType::Document => {
-                            title = format!("📎 {}", vec_dupe_table[row].name);
-                        },
-                        enums::enums::FileType::Other => {
-                            title = format!("📝 {}", vec_dupe_table[row].name);
-                        },
-                        enums::enums::FileType::None => {},
-                        enums::enums::FileType::All => {},
-                    }
-                  
-                    //title
-                    title = truncate(&title, 150).to_string(); 
-                    let diff = 150 - title.chars().count(); 
-                    if diff > 0 {
-                        for _ in 0..=diff {
-                            title.push(' ');
-                        }
-                    } 
-                    //println!("title.len()::{}", &title.chars().count()); 
-
-                    //adjusted_byte
-                    let diff = 10 - adjusted_byte.to_string().chars().count();  
-                    let mut space:String = String::from("");
-                    for _ in 0..diff {
-                        space.push(' ');
-
-                    }
-                    let test_adjusted_byte = [space, adjusted_byte.to_string()].join("");
-
-                    //text_file_count
-                    let diff = 10 - text_file_count.to_string().chars().count();  
-                    let mut space:String = String::from("");
-                    for _ in 0..diff {
-                        space.push(' ');
-
-                    }
-                    let test_file_count = [space, text_file_count.to_string()].join("");
+                     
+                    let (title, adjusted_byte, file_count) = get_table_fields(vec_table[row].clone());
  
-                        let mut style: egui::Style = (*_ctx.style()).clone();
-                        style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
-                        style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
- 
-                        _ctx.set_style(style);
- 
-                         egui::Grid::new("grid_main_labels")
-                                .striped(true)
-                                .num_columns(3)
-                                .spacing(egui::Vec2::new(0.0, 10.0))
-                                .show(ui, |ui| {
-                                    if ui
-                                        .add_sized([900.0, 35.0],egui::Button::new(
-                                            egui::RichText::new(truncate(&title, 122).to_string())
-                                            .color(egui::Color32::from_rgb(45, 51, 59) ) )
-                                            .fill(egui::Color32::from_rgb(228, 244, 252))
-                                        )
-                                        .clicked()
-                                    {  
-                                        self.selected_collection = vec_dupe_table[row].checksum.to_string();
-                                        self.c = vec_dupe_table[row].list.to_vec(); 
-                                    }
-                                    ui.add_sized([100.0, 35.0],egui::Button::new(
-                                        egui::RichText::new(test_file_count.to_string())
-                                        .color(egui::Color32::from_rgb(45, 51, 59)) )
-                                        .fill(egui::Color32::from_rgb(228, 244, 252)));
-                                    ui.add_sized([100.0, 35.0],egui::Button::new(
-                                        egui::RichText::new(test_adjusted_byte.to_string())
-                                        .color(egui::Color32::from_rgb(45, 51, 59)) )
-                                        .fill(egui::Color32::from_rgb(228, 244, 252))); 
-                                    ui.end_row();    
-                                });    
+                    egui::Grid::new("grid_main_labels")
+                        .striped(true)
+                        .num_columns(3)
+                        .spacing(egui::Vec2::new(0.0, 10.0))
+                        .show(ui, |ui| {
+                            if ui
+                                .add_sized([900.0, 35.0],egui::Button::new(
+                                    egui::RichText::new(truncate(&title, 122).to_string())
+                                    .color(egui::Color32::from_rgb(45, 51, 59) ) )
+                                    .fill(egui::Color32::from_rgb(228, 244, 252))
+                                )
+                                .clicked()
+                            {  
+                                self.selected_collection = vec_table[row].checksum.to_string();
+                                self.c = vec_table[row].list.to_vec(); 
+                            }
+                            ui.add_sized([100.0, 35.0],egui::Button::new(
+                                egui::RichText::new(file_count)
+                                .color(egui::Color32::from_rgb(45, 51, 59)) )
+                                .fill(egui::Color32::from_rgb(228, 244, 252)));
+                            ui.add_sized([100.0, 35.0],egui::Button::new(
+                                egui::RichText::new(adjusted_byte)
+                                .color(egui::Color32::from_rgb(45, 51, 59)) )
+                                .fill(egui::Color32::from_rgb(228, 244, 252))); 
+                            ui.end_row();    
+                        });    
                 }
             }); //end of scroll
        
