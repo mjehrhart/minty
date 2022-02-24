@@ -105,7 +105,7 @@ impl Application<'_> {
         //     //for mut item in d2.data_set.clone().iter_mut() { 
             let (k, v) = item;  
             println!("k::{:?}", k);
-            if self.ctrl_skip_display_dupes == true {
+            if self.ctrl_skip_display_dupes {
                 if v.len() > 1 { 
                     let dt = DupeTable{
                         name: v[0].name.to_string(),
@@ -201,8 +201,7 @@ impl Application<'_> {
                 for _ in 0..=diff {
                     title.push(' ');
                 }
-            } 
-            //println!("title.len()::{}", &title.chars().count()); 
+            }  
 
             //adjusted_byte
             let diff = 10 - adjusted_byte.to_string().chars().count();  
@@ -322,13 +321,12 @@ impl Application<'_> {
                     .join(" ");
 
                     //********************************************************//
- 
-                    let t_counter = format!("{}", &title); //. ▶
+  
                     ui.horizontal(|ui| {
 
-                        if ui.checkbox(&mut row.ui_event_status, t_counter).clicked() {
+                        if ui.checkbox(&mut row.ui_event_status, title).clicked() {
  
-                            if row.ui_event_status == true {
+                            if row.ui_event_status {
                                 row.status = FileAction::Delete;
                             } else {
                                 row.status = FileAction::Read;
@@ -338,7 +336,7 @@ impl Application<'_> {
                                 self.b.data_set.get_mut(&self.selected_collection).unwrap();
                             for mut row2 in collection {
                                 if row2.path == row.path { 
-                                    if row.ui_event_status == true {
+                                    if row.ui_event_status {
                                         //row2.set_status(FileAction::Delete);
                                         row2.status = FileAction::Delete;
                                         row2.ui_event_status = true;
@@ -362,7 +360,7 @@ impl Application<'_> {
 
                     //counter += 1;
                 }
-            }); //end of scroll
+            } ); //end of scroll
     }
 
     fn delete_collection(&mut self, ui: &mut egui::Ui) {
@@ -452,11 +450,40 @@ impl Application<'_> {
         // style.visuals.widgets.open.bg_fill = egui::Color32::GOLD;
         //ctx.set_style(style);
     }
+
+    fn set_file_type_button(&mut self, ui: &mut egui::Ui, title: &str, index: usize){
+        
+        println!("set_file_type_button() {:?}, {}, {:?}", title, index, self.ctrl_filter_filetype );
+       
+        let mut text = format!("{}::{}", title, self.filters_filetype_counters[index]);
+        if index == 5 {
+            text = title.to_string();
+        }
+         
+            if ui
+                .add_sized([143.0, 35.0], egui::Button::new(text))
+                .clicked()
+            {
+                match index {
+                    0 => self.ctrl_filter_filetype = enums::enums::FileType::Audio,
+                    1 => self.ctrl_filter_filetype = enums::enums::FileType::Document,
+                    2 => self.ctrl_filter_filetype = enums::enums::FileType::Image,
+                    3 => self.ctrl_filter_filetype = enums::enums::FileType::Other,
+                    4 => self.ctrl_filter_filetype = enums::enums::FileType::Video,
+                    5 => self.ctrl_filter_filetype = enums::enums::FileType::All,
+                    _ => {}
+                } 
+                self.status_filetype_counters = true;
+
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
+            }
+    }
 }
 
 impl<'a> epi::App for Application<'a> {
     fn name(&self) -> &str {
-        "FUgly Finder"
+        "FUgly"
     }
 
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
@@ -597,22 +624,7 @@ impl<'a> epi::App for Application<'a> {
 
         egui::TopBottomPanel::top("top_panel").frame(my_frame2).show(ctx, |ui| {
             ui.add_space(2.0);
-
-
-            //USED FOR TESTING ALIGNMENT
-           /*  ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| { 
-                let flipped = ui.layout().horizontal_align() == egui::Align::LEFT;
-            
-                if ui
-                    .add_sized([143.0, 1.0], egui::Button::new("Temp Files"))
-                    .clicked()
-                {
-                    //do something
-                }
-            });
- */
-           
-
+  
             egui::Grid::new("top_menu_grid").show(ui, |ui| {
                
                 if ui
@@ -668,7 +680,7 @@ impl<'a> epi::App for Application<'a> {
                 {
                
                     self.theme_prefer_light_mode = !self.theme_prefer_light_mode ;
-                    if self.theme_prefer_light_mode == false{
+                    if !self.theme_prefer_light_mode {
                         ctx.set_visuals(egui::Visuals::dark()); 
                     } else {
                         ctx.set_visuals(egui::Visuals::light());
@@ -681,47 +693,37 @@ impl<'a> epi::App for Application<'a> {
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | 3gp | aa | aac | aax | act | aiff | amr|  ape | au | flac | gsm | m4a | m4b | m4p | mp3 | mpc | mogg | ogg | raw | sln | tta | voc | vox | wav | wma |");
                     })
-                    .clicked() 
-                { 
-                }
+                    .clicked() { }
                 if ui
                     .checkbox(&mut self.filter_search_filetype[1], "Documents")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | doc | docx | txt | xls | pdf | ppt | vcs | zip |");
                     })
-                    .clicked()
-                { 
-                }
+                    .clicked() { }
                 if ui
                     .checkbox(&mut self.filter_search_filetype[2], "Images")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | dds | jpg | jpeg | heic | heif | png | psd | tif | tiff| tga | thm |");
                     })
-                    .clicked()
-                { 
-                }
+                    .clicked() { }
                 if ui
                     .checkbox(&mut self.filter_search_filetype[3], "Other")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: anything not covered by the other filters. Checking this box can significantly increase the search time.");
                     })
-                    .clicked()
-                { 
-                } 
+                    .clicked() { } 
                 if ui
                     .checkbox(&mut self.filter_search_filetype[4], "Videos")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | avi | mpg | mpeg | mov | mp4 |");
                     })
-                    .clicked()
-                { 
-                }
+                    .clicked() { }
 
                 //Open Directory
                 if ui
                     .add(egui::Button::new(
                         egui::RichText::new("Select Directory")
-                            //.color(egui::Color32::GREEN)
+                             .color( egui::Color32::from_rgb(0,191,255) )
                             .monospace(),
                     ))
                     .clicked()
@@ -737,7 +739,7 @@ impl<'a> epi::App for Application<'a> {
                     match res {
                         Some(_) => {
                             self.c = vec![]; 
-                            let f = res.unwrap().clone().into_os_string().into_string(); 
+                            let f = res.unwrap().into_os_string().into_string();  //res.unwrap().clone().into_os_string().into_string(); 
                             self.ctrl_starting_directory = f.unwrap(); 
                         }
                         None => (),
@@ -766,108 +768,20 @@ impl<'a> epi::App for Application<'a> {
 
         egui::SidePanel::left("my_left_side_panel").frame(my_frame1).show(ctx, |ui| {
            
-            //DropDown SortBy
-            ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-                self.drop_down_sort_by(ui);
-            });
+            //DropDown SortBy 
+            self.drop_down_sort_by(ui); 
  
             //Menu Filters
-            ui.with_layout(egui::Layout::from_main_dir_and_cross_align(
-                egui::Direction::TopDown,
-                egui::Align::LEFT 
-            ), |ui| {
-                //ui.set_height(20.);
-                if ui
-                    .add_sized([143.0, 100.0], egui::Button::new("All Files"))
-                    .clicked()
-                {
-                    self.ctrl_filter_filetype = enums::enums::FileType::All;
-                    self.status_filetype_counters = true;
-
-                    let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-                    self.a = d2;
-
-                    // let modifiers = ui.ctx().input().modifiers;
-                    // ui.ctx().output().open_url = Some(egui::output::OpenUrl {
-                    //     url: "/Users/matthew/temp/IMG_0435.jpg".to_owned(),
-                    //     new_tab: modifiers.any(),
-                    // });
-
-                }
-            }); 
-            //self.filters_filetype_counters
-            let title = format!("{}::{}", "Audio", self.filters_filetype_counters[0]);
-            if ui
-                .add_sized([143.0, 100.0], egui::Button::new(title))
-                .clicked()
-            {
-                self.ctrl_filter_filetype = enums::enums::FileType::Audio;
-                self.status_filetype_counters = true;
-
-                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-                self.a = d2;
-            }
-
-            let title = format!("{}::{}", "Documents", self.filters_filetype_counters[1]);
-            if ui
-                .add_sized([143.0, 100.0], egui::Button::new(title))
-                .clicked()
-            {
-                self.ctrl_filter_filetype = enums::enums::FileType::Document;
-                self.status_filetype_counters = true;
-
-                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-                self.a = d2;
-            }
-
-            let title = format!("{}::{}", "Images", self.filters_filetype_counters[2]);
-            if ui
-                .add_sized([143.0, 100.0], egui::Button::new(title))
-                .clicked()
-            {
-                self.ctrl_filter_filetype = enums::enums::FileType::Image;
-                self.status_filetype_counters = true;
-
-                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-                self.a = d2;
-            } 
-
-            let title = format!("{}:{}", "Others", self.filters_filetype_counters[3]);
-            if ui
-                .add_sized([143.0, 100.0], egui::Button::new(title))
-                .clicked()
-            {
-                self.ctrl_filter_filetype = enums::enums::FileType::Other;
-                self.status_filetype_counters = true;
-
-                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-                self.a = d2;
-            }
-
-            let title = format!("{}::{}", "Videos", self.filters_filetype_counters[4]);
-            if ui
-                .add_sized([143.0, 100.0], egui::Button::new(title))
-                .clicked()
-            {
-                self.ctrl_filter_filetype = enums::enums::FileType::Video;
-                self.status_filetype_counters = true;
-
-                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-                self.a = d2;
-            }
-
-            /* ui.scope(|ui| {
-                ui.visuals_mut().override_text_color = Some(egui::Color32::RED);
-                ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
-                ui.style_mut().wrap = Some(true);
-
-                ui.label("This text will be red, monospace, and won't wrap to a new line");
-            }); // the temporary settings are reverted here */
+            self.set_file_type_button(ui, "All Files", 5);
+            self.set_file_type_button(ui, "Audio", 0);
+            self.set_file_type_button(ui, "Documents", 1);
+            self.set_file_type_button(ui, "Images", 2);
+            self.set_file_type_button(ui, "Other", 3);
+            self.set_file_type_button(ui, "Videos", 4); 
         });
 
         egui::TopBottomPanel::bottom("bottom_panel").frame(my_frame2).show(ctx, |ui| {
-            //ui.set_height(20.);
-            //ui.add_space(15.);
+       
             ui.with_layout(egui::Layout::right_to_left(), |ui| {
                 self.delete_all(ui);
                  
@@ -946,7 +860,7 @@ fn filter_hashmap_by_filetype(
         if ft != enums::enums::FileType::All {
             v.retain(|x| x.file_type == ft);
 
-            if v.len() == 0 {
+            if v.is_empty(){
                 d2.data_set.remove(&k);
             }
         }
@@ -1016,3 +930,10 @@ fn truncate(s: &str, max_chars: usize) -> &str {
     }
 }
  
+            /* ui.scope(|ui| {
+                ui.visuals_mut().override_text_color = Some(egui::Color32::RED);
+                ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
+                ui.style_mut().wrap = Some(true);
+
+                ui.label("This text will be red, monospace, and won't wrap to a new line");
+            }); // the temporary settings are reverted here */

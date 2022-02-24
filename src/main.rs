@@ -16,7 +16,7 @@ fn return_dfer2(path: &str, filters: [bool; 5]) -> finder::finder::Finder {
     // let mut filters = [true; 5];
     // filters[2] = false; //ignore images (ie test)
     //Block to connect to async values
-    executor::block_on(ff.rayon_walk_dir(&path, filters));
+    executor::block_on(ff.rayon_walk_dir(path, filters));
 
     ff.adjust_file_order();
     ff
@@ -31,7 +31,7 @@ fn filter_hashmap_by_filetype(
 
         v.retain(|x| x.file_type == ft);
 
-        if v.len() == 0 {
+        if v.is_empty(){
             d2.data_set.remove(&k);
         }
     }
