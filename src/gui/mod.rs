@@ -24,7 +24,7 @@ use file::meta::*;
 extern crate byte_unit;
 use byte_unit::{Byte};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug )]
 pub struct DupeTable {
     name: String,
     count: i32,
@@ -34,9 +34,11 @@ pub struct DupeTable {
 }
 
 //TODO check self.b and self.a references!!!
+//#![windows_subsystem = "windows"]
 
 #[derive(Clone)]
 pub struct Application<'a> {
+    staging: Vec<Vec<DupeTable>>,
     a: finder::finder::Finder,
     b: finder::finder::Finder,
     c: Vec<file::meta::Meta>, 
@@ -55,6 +57,7 @@ pub struct Application<'a> {
 impl Application<'_> {
     pub fn default() -> Self {
         Self {
+            staging: vec![],
             a: finder::finder::Finder::new(),
             b: finder::finder::Finder::new(),
             c: vec![file::meta::Meta::new()], 
@@ -81,8 +84,10 @@ impl Application<'_> {
                 //ui.label("Hide Singles");
  
                  
-                ui.add(toggle(&mut self.ctrl_skip_display_dupes));
+                ui.add_sized([100.0, 35.], toggle(&mut self.ctrl_skip_display_dupes));
+
                 ui.end_row();
+
                 if egui::ComboBox::new("siome123","")
                     .width(136.0) 
                     .show_index(
@@ -95,16 +100,21 @@ impl Application<'_> {
                 {
                      
                 }; 
+
+                 
+                 
                 ui.end_row();  
             });
     }
  
     fn configure_comparison_vec(&mut self, mut vec: Vec<DupeTable> ) -> Vec<DupeTable> {
   
+        let mut total = 0;
+        let mut multi_only = 0;
         for item in self.a.data_set.iter() {
         //     //for mut item in d2.data_set.clone().iter_mut() { 
             let (k, v) = item;  
-            println!("k::{:?}", k);
+            
             if self.ctrl_skip_display_dupes {
                 if v.len() > 1 { 
                     let dt = DupeTable{
@@ -114,7 +124,9 @@ impl Application<'_> {
                         list: v.to_vec(),
                         file_type: v[0].file_type,
                     }; 
-                    vec.push(dt);
+                    vec.push(dt); 
+                    multi_only += 1;
+                    total += 1;
                 } 
             } else {
                 let dt = DupeTable{
@@ -125,7 +137,17 @@ impl Application<'_> {
                     file_type: v[0].file_type,
                 };
                 vec.push(dt); 
+                total += 1;
             }  
+        }
+        //println!("Total:: {}; Multi_Only {}", total, multi_only);
+
+        if vec.len() > 50_000{
+
+        } else   {
+            // let x = vec[..50];
+            let x = vec.clone();
+            self.staging.push(vec.clone());
         }
         vec
     }
@@ -213,7 +235,7 @@ impl Application<'_> {
             let adjusted_byte = [space, adjusted_byte.to_string()].join("");
 
             //text_file_count
-            let diff = 10 - text_file_count.to_string().chars().count();  
+            let diff = 20 - text_file_count.to_string().chars().count();  
             let mut space:String = String::from("");
             for _ in 0..diff {
                 space.push(' ');
@@ -224,12 +246,13 @@ impl Application<'_> {
             (title, adjusted_byte, text_file_count)
         }
          
-        //
+        // 
         let mut vec_table = self.configure_comparison_vec(vec![]); 
         let row_height = 35.0;
+         
         let num_rows = vec_table.len(); 
         let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_table);
-
+ 
         //Style
         let mut style: egui::Style = (*_ctx.style()).clone();
         style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
@@ -453,7 +476,7 @@ impl Application<'_> {
 
     fn set_file_type_button(&mut self, ui: &mut egui::Ui, title: &str, index: usize){
         
-        println!("set_file_type_button() {:?}, {}, {:?}", title, index, self.ctrl_filter_filetype );
+       // println!("set_file_type_button() {:?}, {}, {:?}", title, index, self.ctrl_filter_filetype );
        
         let mut text = format!("{}::{}", title, self.filters_filetype_counters[index]);
         if index == 5 {
@@ -623,7 +646,7 @@ impl<'a> epi::App for Application<'a> {
         };
 
         egui::TopBottomPanel::top("top_panel").frame(my_frame2).show(ctx, |ui| {
-            ui.add_space(2.0);
+            ui.add_space(4.0);
   
             egui::Grid::new("top_menu_grid").show(ui, |ui| {
                
@@ -761,9 +784,9 @@ impl<'a> epi::App for Application<'a> {
 
             let sep = egui::Separator::default().spacing(5.);
             //ui.add_sized([143.0, 1.0], sep);
-            ui.add(sep);
+            //ui.add(sep);
 
-           // ui.add_space(1.0);
+            ui.add_space(4.0);
         });
 
         egui::SidePanel::left("my_left_side_panel").frame(my_frame1).show(ctx, |ui| {

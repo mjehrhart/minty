@@ -20,3 +20,7 @@ eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 egui = { git = "https://github.com/emilk/egui", branch = "master" }
 rfd = "0.7.0"
 byte-unit = "4.0.3"
+
+[profile.dev]
+opt-level = 0
+panic = 'unwind'

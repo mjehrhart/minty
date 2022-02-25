@@ -119,18 +119,20 @@ pub mod finder {
                 }
             }
         }
-        pub async fn rayon_walk_dir(&mut self, path: &str, filter: [bool;5]) {
-
+        pub async fn rayon_walk_dir(&mut self, path: &str, filter: [bool; 5]) {
             pub fn walk_files(
                 base_path: &std::path::Path,
                 chunk_size: u64,
-                filter: [bool;5]
+                filter: [bool; 5],
             ) -> std::vec::Vec<(String, String, String, String, u64, u64)> {
                 let entries = Arc::new(Mutex::new(Vec::new()));
 
                 fn read_dir(
                     entries: Arc<Mutex<Vec<(String, String, String, String, u64, u64)>>>,
-                    s: &rayon::Scope<'_>, base_path: PathBuf, chunk_size: u64, filter: [bool;5]
+                    s: &rayon::Scope<'_>,
+                    base_path: PathBuf,
+                    chunk_size: u64,
+                    filter: [bool; 5],
                 ) {
                     for entry in std::fs::read_dir(base_path).unwrap() {
                         let entry = entry.unwrap();
@@ -144,17 +146,17 @@ pub mod finder {
 
                             //**** Testing File Type Filtering for Search */
                             //array =  [flag_audio,flag_document,flag_image,flag_other,flag_video
- 
+
                             let ft = Finder::get_file_type(&p);
                             let mut flag_continue = false;
                             match ft {
                                 FileType::Audio => {
-                                    if filter[0]== true  {
+                                    if filter[0] == true {
                                         flag_continue = true;
                                     }
                                 }
                                 FileType::Document => {
-                                    if filter[1]  == true {
+                                    if filter[1] == true {
                                         flag_continue = true;
                                     }
                                 }
@@ -164,7 +166,7 @@ pub mod finder {
                                     }
                                 }
                                 FileType::Other => {
-                                    if  filter[3] {
+                                    if filter[3] {
                                         flag_continue = true;
                                     }
                                 }
@@ -200,7 +202,7 @@ pub mod finder {
                 let entries = Arc::try_unwrap(entries).unwrap().into_inner().unwrap();
                 entries
             }
-  
+
             let path = std::path::Path::new(path);
             let mut x = walk_files(path, self.chunk_size, filter);
             for item in x {
@@ -519,13 +521,18 @@ pub mod finder {
                 None => return FileType::None,
                 Some(_) => {
                     let ext = ext.unwrap().to_lowercase();
-                    match ext.as_str() { 
+                    match ext.as_str() {
                         "jpg" | "png" | "heic" | "jpeg" | "tiff" | "tif" | "psd" | "tga"
                         | "thm" | "dds" => return FileType::Image,
                         "avi" | "mov" | "mpg" | "mpeg" | "mp4" => return FileType::Video,
-                        "doc" | "docx" | "txt" | "vcs" | "xls" | "pdf" | "ppt" | "zip" =>  return FileType::Document,
-                        "tta"|"sln"|"mogg"|"oga"|"wma"|"wav"|"vox"|"voc"|"raw"|"ogg"|"mpc"|"mp3"|"m4p"|"m4b"|
-                        "m4a"|"gsm"|"flac"|"au"|"ape"|"amr"|"aiff"|"act"|"aax"|"aac"|"aa"|"3gp"=> return FileType::Audio,
+                        "doc" | "docx" | "txt" | "vcs" | "xls" | "pdf" | "ppt" | "zip" => {
+                            return FileType::Document
+                        }
+                        "tta" | "sln" | "mogg" | "oga" | "wma" | "wav" | "vox" | "voc" | "raw"
+                        | "ogg" | "mpc" | "mp3" | "m4p" | "m4b" | "m4a" | "gsm" | "flac" | "au"
+                        | "ape" | "amr" | "aiff" | "act" | "aax" | "aac" | "aa" | "3gp" => {
+                            return FileType::Audio
+                        }
                         _ => return FileType::Other,
                     };
                 }
@@ -540,5 +547,4 @@ pub mod finder {
     pub fn type_of<T>(_: T) -> &'static str {
         std::any::type_name::<T>()
     }
-}
- 
+} 
