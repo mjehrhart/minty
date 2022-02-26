@@ -38,7 +38,10 @@ pub struct DupeTable {
 
 #[derive(Clone)]
 pub struct Application<'a> {
+    e: Vec<DupeTable>,
+    view_area_capacity: usize,
     staging: Vec<Vec<DupeTable>>,
+    selected_staging_index: usize,
     a: finder::finder::Finder,
     b: finder::finder::Finder,
     c: Vec<file::meta::Meta>, 
@@ -54,10 +57,13 @@ pub struct Application<'a> {
     theme_prefer_light_mode: bool,
 }
 
-impl Application<'_> {
+impl<'a> Application<'_> {
     pub fn default() -> Self {
-        Self {
-            staging: vec![],
+        Self { 
+            e: vec![],
+            view_area_capacity: 50_000,
+            staging: vec![], 
+            selected_staging_index: 0,
             a: finder::finder::Finder::new(),
             b: finder::finder::Finder::new(),
             c: vec![file::meta::Meta::new()], 
@@ -65,10 +71,10 @@ impl Application<'_> {
             sort_left_panel: ["Duplicates", "Name", "Size"],
             sort_left_panel_index: 0, 
             ctrl_starting_directory: "".to_string(), 
-            ctrl_skip_display_dupes: true,
+            ctrl_skip_display_dupes: false,
             ctrl_filter_filetype: enums::enums::FileType::All,
-            filter_search_filetype: [true, true, true, false, true],    // [flag_audio,flag_document,flag_image,flag_other,flag_video]
-            filters_filetype_counters: [0;6],                           //[flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
+            filter_search_filetype: [true, true, true, true, true],     // [flag_audio,flag_document,flag_image,flag_other,flag_video]
+            filters_filetype_counters: [0;6],                           // [flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
             theme_prefer_light_mode: true,
             status_filetype_counters: false,
         }
@@ -100,88 +106,76 @@ impl Application<'_> {
                 {
                      
                 }; 
-
-                 
-                 
+ 
                 ui.end_row();  
             });
     }
+
+    fn sort_dupe_table(sort_left_panel_index: i32, vec: &mut Vec<DupeTable>){
+        match sort_left_panel_index {
+            0 => {
+                vec.sort_by(|a, b| b.count.cmp(&a.count)); //file count
+            }
+            1 => {
+                vec.sort_by(|a, b| b.name.cmp(&a.name));     //file name
+            }
+            2 => {
+                vec.sort_by(|a, b| {
+                    let mut a_total = 0;
+                    for row in &a.list {
+                        a_total += row.file_size;
+                    }
+
+                    let mut b_total = 0;
+                    for row in &b.list {
+                        b_total += row.file_size;
+                    }
+
+                    b_total.cmp(&a_total)
+                });
+            }
+            _ => {}
+        }
+    }
  
-    fn configure_comparison_vec(&mut self, mut vec: Vec<DupeTable> ) -> Vec<DupeTable> {
-  
-        let mut total = 0;
-        let mut multi_only = 0;
-        for item in self.a.data_set.iter() {
-        //     //for mut item in d2.data_set.clone().iter_mut() { 
-            let (k, v) = item;  
-            
-            if self.ctrl_skip_display_dupes {
-                if v.len() > 1 { 
-                    let dt = DupeTable{
-                        name: v[0].name.to_string(),
-                        count: v.len().try_into().unwrap(),
-                        checksum: k.to_string(),
-                        list: v.to_vec(),
-                        file_type: v[0].file_type,
-                    }; 
-                    vec.push(dt); 
-                    multi_only += 1;
-                    total += 1;
-                } 
-            } else {
-                let dt = DupeTable{
-                    name: v[0].name.to_string(),
-                    count: v.len().try_into().unwrap(),
-                    checksum: k.to_string(),
-                    list: v.to_vec(),
-                    file_type: v[0].file_type,
-                };
-                vec.push(dt); 
-                total += 1;
-            }  
-        }
-        //println!("Total:: {}; Multi_Only {}", total, multi_only);
+    fn pager( &mut self, ui: &mut egui::Ui){
 
-        if vec.len() > 50_000{
+ 
+        let main_dir = egui::Direction::LeftToRight;
+        let layout = egui::Layout::left_to_right().with_main_wrap(true).with_cross_align(egui::Align::Center);
 
-        } else   {
-            // let x = vec[..50];
-            let x = vec.clone();
-            self.staging.push(vec.clone());
-        }
-        vec
+        // ui.horizontal(add_contents)
+        //     , |ui| { 
+        //     ui.set_height(10.);
+        //     //TODO ui is showing extra button at the end
+        //     for i in 0..self.staging.len() {
+        //         if ui.add_sized([40.0, 35.0], egui::Button::new((i+1).to_string()))
+        //             .clicked()
+        //             {
+        //                 self.selected_staging_index = i; 
+        //             }
+        //     }
+        // });
+
+
+        egui::Grid::new("grid_main_labels") 
+        .spacing(egui::Vec2::new(2.0, 0.0))
+        .show(ui, |ui| {
+
+            //TODO ui is showing extra button at the end
+            for i in 0..self.staging.len() {
+                if ui.add_sized([40.0, 35.0], egui::Button::new((i+1).to_string()))
+                    .clicked()
+                    {
+                        self.selected_staging_index = i; 
+                    }
+            }
+        }); 
     }
 
     fn left_side_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
-  
-        fn sort_dupe_table(sort_left_panel_index: i32, vec: &mut Vec<DupeTable>){
-            match sort_left_panel_index {
-                0 => {
-                    vec.sort_by(|a, b| b.count.cmp(&a.count)); //file count
-                }
-                1 => {
-                    vec.sort_by(|a, b| b.name.cmp(&a.name));     //file name
-                }
-                2 => {
-                    vec.sort_by(|a, b| {
-                        let mut a_total = 0;
-                        for row in &a.list {
-                            a_total += row.file_size;
-                        }
-    
-                        let mut b_total = 0;
-                        for row in &b.list {
-                            b_total += row.file_size;
-                        }
-    
-                        b_total.cmp(&a_total)
-                    });
-                }
-                _ => {}
-            }
-        }
-        
-        fn get_table_fields(dt: DupeTable) -> (String, String, String){
+ 
+    fn get_table_fields(dt: DupeTable) -> (String, String, String){
             let mut a_total = 0;
             for item in &dt.list {
                 a_total += item.file_size;
@@ -235,7 +229,7 @@ impl Application<'_> {
             let adjusted_byte = [space, adjusted_byte.to_string()].join("");
 
             //text_file_count
-            let diff = 20 - text_file_count.to_string().chars().count();  
+            let diff = 12 - text_file_count.to_string().chars().count();  
             let mut space:String = String::from("");
             for _ in 0..diff {
                 space.push(' ');
@@ -246,59 +240,70 @@ impl Application<'_> {
             (title, adjusted_byte, text_file_count)
         }
          
-        // 
-        let mut vec_table = self.configure_comparison_vec(vec![]); 
-        let row_height = 35.0;
-         
-        let num_rows = vec_table.len(); 
-        let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_table);
+        /* /Move all this into a clicked{} event  
+        //let mut vec_table = self.configure_comparison_vec(vec![]);    
+        //let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_table); */
+   
+        if !self.staging.is_empty() {
+               
+            let mut num_rows = 0;  
+            let vec_table = self.staging[self.selected_staging_index].clone();
+            //println!(" \n\n\n\n vec_table = {:#?}", &vec_table);
  
-        //Style
-        let mut style: egui::Style = (*_ctx.style()).clone();
-        style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
-        style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
-        _ctx.set_style(style);
+            if vec_table.len() < self.view_area_capacity{
+                num_rows = vec_table.len(); 
+            } else {
+                num_rows = self.view_area_capacity;
+            }  
+ 
+            //Style
+            let mut style: egui::Style = (*_ctx.style()).clone();
+            style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                 
+            style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
+            _ctx.set_style(style);
 
-        ScrollArea::vertical()
-            .id_source("main_scroll")
-            .auto_shrink([false, false]) 
-            .max_height(500.)
-            .stick_to_right()
-            .show_rows(ui, row_height, num_rows, |ui, row_range| { 
-                for row in row_range {
-                     
-                    let (title, adjusted_byte, file_count) = get_table_fields(vec_table[row].clone());
- 
-                    egui::Grid::new("grid_main_labels")
-                        .striped(true)
-                        .num_columns(3)
-                        .spacing(egui::Vec2::new(0.0, 10.0))
-                        .show(ui, |ui| {
-                            if ui
-                                .add_sized([900.0, 35.0],egui::Button::new(
-                                    egui::RichText::new(truncate(&title, 122).to_string())
-                                    .color(egui::Color32::from_rgb(45, 51, 59) ) )
-                                    .fill(egui::Color32::from_rgb(228, 244, 252))
-                                )
-                                .clicked()
-                            {  
-                                self.selected_collection = vec_table[row].checksum.to_string();
-                                self.c = vec_table[row].list.to_vec(); 
-                            }
-                            ui.add_sized([100.0, 35.0],egui::Button::new(
-                                egui::RichText::new(file_count)
-                                .color(egui::Color32::from_rgb(45, 51, 59)) )
-                                .fill(egui::Color32::from_rgb(228, 244, 252)));
-                            ui.add_sized([100.0, 35.0],egui::Button::new(
-                                egui::RichText::new(adjusted_byte)
-                                .color(egui::Color32::from_rgb(45, 51, 59)) )
-                                .fill(egui::Color32::from_rgb(228, 244, 252))); 
-                            ui.end_row();    
-                        });    
-                }
-            }); //end of scroll
-       
-    }
+            //ScrollArea aTable
+            let row_height = 35.0;
+            ScrollArea::vertical()
+                .id_source("main_scroll")
+                .auto_shrink([false, false]) 
+                .max_height(515.)
+                .stick_to_right()
+                .show_rows(ui, row_height, num_rows, |ui, row_range| { 
+                    for row in row_range {
+                        
+                        let (title, adjusted_byte, file_count) = get_table_fields(  vec_table[row].clone()  ); 
+    
+                        egui::Grid::new("grid_main_labels")
+                            .striped(true)
+                            .num_columns(3)
+                            .spacing(egui::Vec2::new(0.0, 10.0))
+                            .show(ui, |ui| {
+                                if ui
+                                    .add_sized([900.0, 35.0],egui::Button::new(
+                                        egui::RichText::new(truncate(&title, 122).to_string())
+                                        .color(egui::Color32::from_rgb(45, 51, 59) ) )
+                                        .fill(egui::Color32::from_rgb(228, 244, 252))
+                                    )
+                                    .clicked()
+                                {  
+                                    self.selected_collection = vec_table[row].checksum.to_string();
+                                    self.c = vec_table[row].list.to_vec(); 
+                                }
+                                ui.add_sized([100.0, 35.0],egui::Button::new(
+                                    egui::RichText::new(file_count)
+                                    .color(egui::Color32::from_rgb(45, 51, 59)) )
+                                    .fill(egui::Color32::from_rgb(228, 244, 252)));
+                                ui.add_sized([100.0, 35.0],egui::Button::new(
+                                    egui::RichText::new(adjusted_byte)
+                                    .color(egui::Color32::from_rgb(45, 51, 59)) )
+                                    .fill(egui::Color32::from_rgb(228, 244, 252))); 
+                                ui.end_row();    
+                            });    
+                    }
+                }); //end of scroll 
+        }  
+    } 
 
     fn bottom_side_panel(&mut self, ui: &mut egui::Ui) {
         ScrollArea::vertical()
@@ -474,10 +479,8 @@ impl Application<'_> {
         //ctx.set_style(style);
     }
 
-    fn set_file_type_button(&mut self, ui: &mut egui::Ui, title: &str, index: usize){
-        
-       // println!("set_file_type_button() {:?}, {}, {:?}", title, index, self.ctrl_filter_filetype );
-       
+    fn set_file_type_button<'b>(&mut self, ui: &mut egui::Ui, title: &str, index: usize){
+         
         let mut text = format!("{}::{}", title, self.filters_filetype_counters[index]);
         if index == 5 {
             text = title.to_string();
@@ -496,13 +499,94 @@ impl Application<'_> {
                     5 => self.ctrl_filter_filetype = enums::enums::FileType::All,
                     _ => {}
                 } 
-                self.status_filetype_counters = true;
+                //Step 0
+                self.status_filetype_counters = true; 
 
+                //Step 1
                 let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
                 self.a = d2;
+
+                //Step next 
+                self.e  = self.configure_comparison_vec(vec![]);  
+                Application::<'a>::sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut self.staging[self.selected_staging_index]);
+                
+                //Reset Pager
+                self.selected_staging_index = 0;
+                 
+                //println!("self.e {:?}", self.e);  
             }
     }
+ 
+    fn configure_comparison_vec(&mut self, mut vec: Vec<DupeTable> ) -> Vec<DupeTable> {
+   
+        //Step 1
+        for item in self.a.data_set.iter() {
+        //for mut item in d2.data_set.clone().iter_mut() { 
+            let (k, v) = item;  
+            
+            if self.ctrl_skip_display_dupes {
+                if v.len() > 1 { 
+                    let dt = DupeTable{
+                        name: v[0].name.to_string(),
+                        count: v.len().try_into().unwrap(),
+                        checksum: k.to_string(),
+                        list: v.to_vec(),
+                        file_type: v[0].file_type,
+                    }; 
+                    vec.push(dt); 
+                    // multi_only += 1;
+                    // total += 1;
+                } 
+            } else {
+                let dt = DupeTable{
+                    name: v[0].name.to_string(),
+                    count: v.len().try_into().unwrap(),
+                    checksum: k.to_string(),
+                    list: v.to_vec(),
+                    file_type: v[0].file_type,
+                };
+                vec.push(dt); 
+                // total += 1;
+            }  
+         }
+ 
+        //Step 2; Paging Vector Readiness
+        //Reset self.staging
+        self.staging.clear();
+
+        if vec.len() >  self.view_area_capacity{
+            println!("step 2");
+            let quot = vec.len()/ self.view_area_capacity;
+            let rem = vec.len() % self.view_area_capacity;
+            
+            for i in 0..quot{
+
+                let y = (i+1) * self.view_area_capacity;
+                let x = y-self.view_area_capacity;
+
+                println!("[x..y]: [{}..{}]",x,y);
+                let v = vec[x..y].to_vec(); 
+                self.staging.push(v.clone() );
+            }
+            //rem
+            {
+                let y = quot * self.view_area_capacity;
+                let x = y-rem;
+
+                println!("![x..y]: [{}..{}]",x,y);
+                let v = vec[y..].to_vec(); 
+                self.staging.push(v.clone() );
+            }
+        } else {
+            self.staging.push(vec[..].to_vec());
+        }
+
+        vec
+    }
+
 }
+
+//maybe try to put the sort in configure_comparison_vec()
 
 impl<'a> epi::App for Application<'a> {
     fn name(&self) -> &str {
@@ -514,7 +598,7 @@ impl<'a> epi::App for Application<'a> {
         self.configure_fonts(ctx);
      
          
-        let dfer = return_dfer2("/Users/matthew/temp/", self.filter_search_filetype);
+        let dfer = return_dfer2("/Users/matthew/zz/file_types/", self.filter_search_filetype);
          
         println!("dfer::length::{:?}", &dfer.data_set.len());
         let start = Instant::now();
@@ -794,6 +878,28 @@ impl<'a> epi::App for Application<'a> {
             //DropDown SortBy 
             self.drop_down_sort_by(ui); 
  
+            //test 
+            /* if ui
+                .add_sized([143.0, 35.0], egui::Button::new("Test Me"))
+                .clicked()
+            { 
+                //Step 0
+                self.ctrl_filter_filetype = enums::enums::FileType::All;
+                self.status_filetype_counters = true;
+
+                //Step 1
+                let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                self.a = d2;
+
+                //Step next
+                self.e  = self.configure_comparison_vec(vec![]);  
+
+                //Application::<'a>::sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut self.staging[self.selected_staging_index]);
+                //Application::<'a>::sort_dupe_table(0, &mut self.staging[self.selected_staging_index] );
+                //println!("self.staging {:#?}", self.staging);
+
+            } */
+   
             //Menu Filters
             self.set_file_type_button(ui, "All Files", 5);
             self.set_file_type_button(ui, "Audio", 0);
@@ -814,9 +920,6 @@ impl<'a> epi::App for Application<'a> {
 
         egui::CentralPanel::default().frame(my_frame2).show(ctx, |ui| {
               
-
-            //let layout = egui::Layout::from_main_dir_and_cross_align(egui::Direction::TopDown, egui::Align::LEFT);
- 
            /*  ui
                 .scope(|ui| {
                     let background_frame =  egui::containers::Frame {
@@ -837,8 +940,7 @@ impl<'a> epi::App for Application<'a> {
                 })
                 .inner;
             */
-
-
+ 
             ui.with_layout(
                 egui::Layout::from_main_dir_and_cross_align(
                     egui::Direction::RightToLeft,
@@ -854,9 +956,14 @@ impl<'a> epi::App for Application<'a> {
                         let sep = egui::Separator::default().spacing(5.);
                         ui.add(sep);
 
+                        //Pager
+                        self.pager(ui);
+                        let sep = egui::Separator::default().spacing(5.);
+                        ui.add(sep);
+
                         //Delete Collections
                         self.delete_collection(ui);
-
+ 
                         //CheckBoxes
                         self.bottom_side_panel(ui);
 
