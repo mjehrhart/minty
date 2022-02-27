@@ -2,15 +2,13 @@
 name = "minty"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
+ 
 [dependencies]
-error-chain = "0.12.4"
-reqwest = { version = "0.11", features = ["json"] }
+#error-chain = "0.12.4"
+#reqwest = { version = "0.11", features = ["json"] }
 futures = "0.3" # for our async / await blocks
 tokio = { version = "1.16.0", features = ["full"] } 
-rayon = "1.5.1"
+rayon = "1.4.1"
 walkdir = "2"
 regex = "1"
 chrono = "0.4"
@@ -23,5 +21,5 @@ byte-unit = "4.0.3"
 fuzzy-matcher = "0.3.7"
 
 [profile.dev]
-opt-level = 0
+opt-level = 3
 panic = 'unwind'
