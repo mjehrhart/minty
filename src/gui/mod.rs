@@ -38,8 +38,8 @@ pub struct DupeTable {
 
 #[derive(Clone)]
 pub struct Application<'a> {
-    e: Vec<DupeTable>,
-    view_area_capacity: usize,
+    fuzzy_search: String,
+    e: Vec<DupeTable>, 
     staging: Vec<Vec<DupeTable>>,
     selected_staging_index: usize,
     a: finder::finder::Finder,
@@ -62,8 +62,8 @@ pub struct Application<'a> {
 impl<'a> Application<'_> {
     pub fn default() -> Self {
         Self { 
-            e: vec![],
-            view_area_capacity: 40_000,
+            fuzzy_search: String::from(""),
+            e: vec![], 
             staging: vec![], 
             selected_staging_index: 0,
             a: finder::finder::Finder::new(),
@@ -72,7 +72,7 @@ impl<'a> Application<'_> {
             selected_collection: String::from(""),
             sort_left_panel: ["Duplicates", "Name", "Size"],
             pager_size: [3, 5, 10, 1_000, 10_000, 25_000, 35_000, 50_000, 100_000].to_vec(),
-            pager_size_index: 0,
+            pager_size_index: 3,
             sort_left_panel_index: 0, 
             ctrl_starting_directory: "".to_string(), 
             ctrl_skip_display_dupes: false,
@@ -85,23 +85,9 @@ impl<'a> Application<'_> {
     }
  
     fn drop_down_sort_by(&mut self, ui: &mut egui::Ui) {
- 
-        let my_frame = egui::containers::Frame {
-            margin: egui::style::Margin { left: 10., right: 10., top: 10., bottom: 10. },
-            rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
-            shadow: eframe::epaint::Shadow { extrusion: 1.0, color: Color32::YELLOW },
-            fill: Color32::LIGHT_BLUE,
-            stroke: egui::Stroke::new(2.0, Color32::GOLD),
-        };
-
-       
-        egui::Grid::new("grid_hide_singles")
-            .striped(true)
-            .num_columns(2)
-            //.spacing(egui::Vec2::new(16.0, 20.0))
-            .show(ui, |ui| {
   
-                if egui::ComboBox::new("siome123","")
+        ui.horizontal(|ui| {
+            if egui::ComboBox::new("siome123","")
                     .width(100.0) 
                     .show_index(
                         ui,
@@ -127,9 +113,30 @@ impl<'a> Application<'_> {
                     .clicked()
                 { 
                 };
-                
-                ui.end_row();  
-            });
+
+                ui.label("Filter"); 
+    
+                ui.scope(|ui| { 
+                    ui.style_mut().wrap = Some(true);
+                    ui.visuals_mut().extreme_bg_color = egui::Color32::from_rgb(230,230,230);       
+
+                    let response = ui.add( egui::TextEdit::singleline(&mut self.fuzzy_search).code_editor()
+                        .desired_width(300.));
+
+                    if response.changed() {
+                        
+                    }
+                    if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                        println!("lost focus");
+                        println!("{:?}", &self.fuzzy_search);
+                    }
+                }); 
+
+
+                 
+        });
+ 
+            ui.add_space(4.);
     }
 
     fn drop_down_pager_size(&mut self, ui: &mut egui::Ui) {
@@ -188,21 +195,7 @@ impl<'a> Application<'_> {
  
         let main_dir = egui::Direction::LeftToRight;
         let layout = egui::Layout::left_to_right().with_main_wrap(true).with_cross_align(egui::Align::Center);
-
-        // ui.horizontal(add_contents)
-        //     , |ui| { 
-        //     ui.set_height(10.);
-        //     //TODO ui is showing extra button at the end
-        //     for i in 0..self.staging.len() {
-        //         if ui.add_sized([40.0, 35.0], egui::Button::new((i+1).to_string()))
-        //             .clicked()
-        //             {
-        //                 self.selected_staging_index = i; 
-        //             }
-        //     }
-        // });
-
-
+ 
         egui::Grid::new("grid_main_labels") 
         .spacing(egui::Vec2::new(2.0, 0.0))
         .show(ui, |ui| {
@@ -326,7 +319,7 @@ impl<'a> Application<'_> {
                             .spacing(egui::Vec2::new(0.0, 10.0))
                             .show(ui, |ui| {
                                 if ui
-                                    .add_sized([900.0, 35.0],egui::Button::new(
+                                    .add_sized([970.0, 35.0],egui::Button::new(
                                         egui::RichText::new(truncate(&title, 122).to_string())
                                         .color(egui::Color32::from_rgb(45, 51, 59) ) )
                                         .fill(egui::Color32::from_rgb(228, 244, 252))
@@ -510,7 +503,7 @@ impl<'a> Application<'_> {
         // style.visuals.extreme_bg_color = egui::Color32::DARK_RED;                  
         // style.visuals.faint_bg_color = egui::Color32::LIGHT_BLUE;                           //highlights toggle ui background
         // style.visuals.code_bg_color = egui::Color32::from_rgb(45, 51, 59);
-        
+
         // style.visuals.hyperlink_color = egui::Color32::from_rgb(0,191,255);                    //hyperlinks
         // style.visuals.override_text_color = Some(egui::Color32::from_rgb(45, 51, 59));            //Common Text (not text in main panel buttons)
       
@@ -628,9 +621,7 @@ impl<'a> Application<'_> {
         //Step 2; Paging Vector Readiness
         //Reset self.staging
         self.staging.clear();
-
-        //view_area_capacity
-        //pager_size[pager_size];
+  
         let pager_size = self.pager_size[self.pager_size_index];
         if vec.len() >  pager_size{
             println!("step 2");
@@ -795,7 +786,7 @@ impl<'a> epi::App for Application<'a> {
             margin: egui::style::Margin { left: 5., right: 5., top: 5., bottom: 2. },
             rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
             shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
-            fill: Color32::from_rgb(83, 115, 146),
+            fill: Color32::from_rgb(244, 244, 244), //83, 115, 146
             stroke: egui::Stroke::new(0.0, Color32::GOLD),
         };
 
@@ -1149,3 +1140,24 @@ fn truncate(s: &str, max_chars: usize) -> &str {
 
                 ui.label("This text will be red, monospace, and won't wrap to a new line");
             }); // the temporary settings are reverted here */
+
+
+                /* ui
+                .scope(|ui| {
+                    let background_frame =  egui::containers::Frame {
+                        margin: egui::style::Margin { left: 0., right: 0., top: 0., bottom: 0. },
+                        rounding: egui::Rounding { nw: 0.0, ne: 0.0, sw: 0.0, se: 0.0 },
+                        shadow: eframe::epaint::Shadow { extrusion: 1.0, color: Color32::YELLOW },
+                        fill: Color32::from_rgb(193, 195, 116),
+                        stroke: egui::Stroke::new(0.0, Color32::GOLD),
+                    };
+
+    
+                    //.multiply_with_opacity(config.background_alpha);
+                    background_frame
+                        .show(ui, |ui| {
+                             ui.add_sized([100.0, 35.0], egui::Button::new("test"));
+                        })
+                        .inner
+                })
+                .inner; */
