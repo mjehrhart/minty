@@ -48,6 +48,8 @@ pub struct Application<'a> {
     selected_collection: String,
     sort_left_panel: [&'a str; 3],
     sort_left_panel_index: usize, 
+    pager_size: Vec<usize>,
+    pager_size_index: usize,
     ctrl_skip_display_dupes: bool,
     ctrl_starting_directory: String, 
     ctrl_filter_filetype: enums::enums::FileType,
@@ -61,7 +63,7 @@ impl<'a> Application<'_> {
     pub fn default() -> Self {
         Self { 
             e: vec![],
-            view_area_capacity: 50_000,
+            view_area_capacity: 40_000,
             staging: vec![], 
             selected_staging_index: 0,
             a: finder::finder::Finder::new(),
@@ -69,11 +71,13 @@ impl<'a> Application<'_> {
             c: vec![file::meta::Meta::new()], 
             selected_collection: String::from(""),
             sort_left_panel: ["Duplicates", "Name", "Size"],
+            pager_size: [3, 5, 10, 1_000, 10_000, 25_000, 35_000, 50_000, 100_000].to_vec(),
+            pager_size_index: 0,
             sort_left_panel_index: 0, 
             ctrl_starting_directory: "".to_string(), 
             ctrl_skip_display_dupes: false,
             ctrl_filter_filetype: enums::enums::FileType::All,
-            filter_search_filetype: [true, true, true, true, true],     // [flag_audio,flag_document,flag_image,flag_other,flag_video]
+            filter_search_filetype: [true, true, true, false, true],     // [flag_audio,flag_document,flag_image,flag_other,flag_video]
             filters_filetype_counters: [0;6],                           // [flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
             theme_prefer_light_mode: true,
             status_filetype_counters: false,
@@ -82,20 +86,23 @@ impl<'a> Application<'_> {
  
     fn drop_down_sort_by(&mut self, ui: &mut egui::Ui) {
  
+        let my_frame = egui::containers::Frame {
+            margin: egui::style::Margin { left: 10., right: 10., top: 10., bottom: 10. },
+            rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
+            shadow: eframe::epaint::Shadow { extrusion: 1.0, color: Color32::YELLOW },
+            fill: Color32::LIGHT_BLUE,
+            stroke: egui::Stroke::new(2.0, Color32::GOLD),
+        };
+
+       
         egui::Grid::new("grid_hide_singles")
             .striped(true)
             .num_columns(2)
             //.spacing(egui::Vec2::new(16.0, 20.0))
             .show(ui, |ui| {
-                //ui.label("Hide Singles");
- 
-                 
-                ui.add_sized([100.0, 35.], toggle(&mut self.ctrl_skip_display_dupes));
-
-                ui.end_row();
-
+  
                 if egui::ComboBox::new("siome123","")
-                    .width(136.0) 
+                    .width(100.0) 
                     .show_index(
                         ui,
                         &mut self.sort_left_panel_index,
@@ -103,13 +110,51 @@ impl<'a> Application<'_> {
                         |i| self.sort_left_panel[i].to_owned(),
                     )
                     .clicked()
-                {
-                     
+                { 
                 }; 
- 
+                ui.label("Hide Singles"); 
+                ui.add(toggle(&mut self.ctrl_skip_display_dupes));
+                 
+                ui.label("Page Size"); 
+                if egui::ComboBox::new("siome123d","")
+                    .width(100.0) 
+                    .show_index(
+                        ui,
+                        &mut self.pager_size_index,
+                        self.pager_size.len(), 
+                        |i| self.pager_size[i].to_owned().to_string(),
+                    )
+                    .clicked()
+                { 
+                };
+                
                 ui.end_row();  
             });
     }
+
+    fn drop_down_pager_size(&mut self, ui: &mut egui::Ui) {
+ 
+        egui::Grid::new("grid_pager_size")
+            .striped(true)
+            .num_columns(2)
+            //.spacing(egui::Vec2::new(16.0, 20.0))
+            .show(ui, |ui| {
+  
+                if egui::ComboBox::new("siome123d","")
+                    .width(100.0) 
+                    .show_index(
+                        ui,
+                        &mut self.pager_size_index,
+                        self.pager_size.len(), 
+                        |i| self.pager_size[i].to_owned().to_string(),
+                    )
+                    .clicked()
+                { 
+                };  
+                ui.end_row();  
+            });
+    }
+
 
     fn sort_dupe_table(sort_left_panel_index: i32, vec: &mut Vec<DupeTable>){
         match sort_left_panel_index {
@@ -174,8 +219,8 @@ impl<'a> Application<'_> {
     }
 
     fn left_side_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
- 
-    fn get_table_fields(dt: DupeTable) -> (String, String, String){
+
+        fn get_table_fields(dt: DupeTable) -> (String, String, String){
             let mut a_total = 0;
             for item in &dt.list {
                 a_total += item.file_size;
@@ -239,7 +284,7 @@ impl<'a> Application<'_> {
             
             (title, adjusted_byte, text_file_count)
         }
-         
+          
         /* /Move all this into a clicked{} event  
         //let mut vec_table = self.configure_comparison_vec(vec![]);    
         //let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_table); */
@@ -250,10 +295,11 @@ impl<'a> Application<'_> {
             let vec_table = self.staging[self.selected_staging_index].clone();
             //println!(" \n\n\n\n vec_table = {:#?}", &vec_table);
  
-            if vec_table.len() < self.view_area_capacity{
+
+            if vec_table.len() < self.pager_size[self.pager_size_index]{
                 num_rows = vec_table.len(); 
             } else {
-                num_rows = self.view_area_capacity;
+                num_rows = self.pager_size[self.pager_size_index];
             }  
  
             //Style
@@ -306,6 +352,7 @@ impl<'a> Application<'_> {
     } 
 
     fn bottom_side_panel(&mut self, ui: &mut egui::Ui) {
+           
         ScrollArea::vertical()
             .id_source("bottom_scroll")
             .auto_shrink([false, false])
@@ -487,7 +534,7 @@ impl<'a> Application<'_> {
         }
          
             if ui
-                .add_sized([143.0, 35.0], egui::Button::new(text))
+                .add_sized([100.0, 35.0], egui::Button::new(text))
                 .clicked()
             {
                 match index {
@@ -499,6 +546,7 @@ impl<'a> Application<'_> {
                     5 => self.ctrl_filter_filetype = enums::enums::FileType::All,
                     _ => {}
                 } 
+
                 //Step 0
                 self.status_filetype_counters = true; 
 
@@ -506,7 +554,10 @@ impl<'a> Application<'_> {
                 let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
                 self.a = d2;
 
-                //Step next 
+                //Reset Pager
+                self.selected_staging_index = 0;
+                
+                //Step next  
                 self.e  = self.configure_comparison_vec(vec![]);  
                 Application::<'a>::sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut self.staging[self.selected_staging_index]);
                 
@@ -533,9 +584,7 @@ impl<'a> Application<'_> {
                         list: v.to_vec(),
                         file_type: v[0].file_type,
                     }; 
-                    vec.push(dt); 
-                    // multi_only += 1;
-                    // total += 1;
+                    vec.push(dt);   
                 } 
             } else {
                 let dt = DupeTable{
@@ -545,24 +594,53 @@ impl<'a> Application<'_> {
                     list: v.to_vec(),
                     file_type: v[0].file_type,
                 };
-                vec.push(dt); 
-                // total += 1;
+                vec.push(dt);  
             }  
          }
+ 
+        //println!("PRE sort");
+         match self.sort_left_panel_index {
+            0 => {
+                vec.sort_by(|a, b| b.count.cmp(&a.count)); //file count
+            }
+            1 => {
+                vec.sort_by(|a, b| b.name.cmp(&a.name));     //file name
+            }
+            2 => {
+                vec.sort_by(|a, b| {
+                    let mut a_total = 0;
+                    for row in &a.list {
+                        a_total += row.file_size;
+                    }
+
+                    let mut b_total = 0;
+                    for row in &b.list {
+                        b_total += row.file_size;
+                    }
+
+                    b_total.cmp(&a_total)
+                });
+            }
+            _ => {}
+        }
+        //println!("AFTER sort");
  
         //Step 2; Paging Vector Readiness
         //Reset self.staging
         self.staging.clear();
 
-        if vec.len() >  self.view_area_capacity{
+        //view_area_capacity
+        //pager_size[pager_size];
+        let pager_size = self.pager_size[self.pager_size_index];
+        if vec.len() >  pager_size{
             println!("step 2");
-            let quot = vec.len()/ self.view_area_capacity;
-            let rem = vec.len() % self.view_area_capacity;
+            let quot = vec.len()/ pager_size;
+            let rem = vec.len() % pager_size;
             
             for i in 0..quot{
 
-                let y = (i+1) * self.view_area_capacity;
-                let x = y-self.view_area_capacity;
+                let y = (i+1) * pager_size;
+                let x = y-pager_size;
 
                 println!("[x..y]: [{}..{}]",x,y);
                 let v = vec[x..y].to_vec(); 
@@ -570,7 +648,7 @@ impl<'a> Application<'_> {
             }
             //rem
             {
-                let y = quot * self.view_area_capacity;
+                let y = quot * pager_size;
                 let x = y-rem;
 
                 println!("![x..y]: [{}..{}]",x,y);
@@ -714,7 +792,7 @@ impl<'a> epi::App for Application<'a> {
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
 
         let my_frame1 = egui::containers::Frame {
-            margin: egui::style::Margin { left: 10., right: 2., top: 5., bottom: 2. },
+            margin: egui::style::Margin { left: 5., right: 5., top: 5., bottom: 2. },
             rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
             shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
             fill: Color32::from_rgb(83, 115, 146),
@@ -876,7 +954,7 @@ impl<'a> epi::App for Application<'a> {
         egui::SidePanel::left("my_left_side_panel").frame(my_frame1).show(ctx, |ui| {
            
             //DropDown SortBy 
-            self.drop_down_sort_by(ui); 
+            //self.drop_down_sort_by(ui); 
  
             //test 
             /* if ui
@@ -949,6 +1027,10 @@ impl<'a> epi::App for Application<'a> {
                 |ui| {
                     ui.vertical(|ui| {
                      
+                        //DropDown SortBy 
+                        self.drop_down_sort_by(ui);
+                         
+
                         //MainPanel
                         self.left_side_panel(ui, ctx);
 
@@ -1023,7 +1105,7 @@ pub fn get_created_date(path: &str) -> std::io::Result<String> {
 }
 
 pub fn toggle_ui(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
-    let desired_size = ui.spacing().interact_size.y * egui::vec2(8.0, 1.0);
+    let desired_size = ui.spacing().interact_size.y * egui::vec2(2.0, 1.0);
     let (rect, mut response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
     if response.clicked() {
         *on = !*on;
