@@ -130,10 +130,7 @@ impl<'a> Application<'_> {
                         println!("lost focus");
                         println!("{:?}", &self.fuzzy_search);
                     }
-                }); 
-
-
-                 
+                });     
         });
  
             ui.add_space(4.);

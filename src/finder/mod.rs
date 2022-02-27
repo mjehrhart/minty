@@ -22,7 +22,7 @@ pub mod finder {
     use tokio::io::{self, AsyncReadExt};
     use tokio::task;
     use tokio::{fs, join};
-    //use walkdir::DirEntry;
+    use walkdir::DirEntry;
     use jwalk::WalkDir;
     use rayon::prelude::*;
     use regex::Regex;
