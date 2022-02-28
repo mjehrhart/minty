@@ -20,6 +20,7 @@ rfd = "0.7.0"
 byte-unit = "4.0.3"
 fuzzy-matcher = "0.3.7"
 image = "0.24.1"
+home = "0.5.3"
 
 [profile.dev]
 opt-level = 3

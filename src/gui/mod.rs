@@ -23,6 +23,7 @@ use file::meta::*;
 
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use home;
 
 extern crate byte_unit;
 use byte_unit::{Byte};
@@ -75,7 +76,7 @@ impl<'a> Application<'_> {
             selected_collection: String::from(""),
             sort_left_panel: ["Duplicates", "Name", "Size"],
             pager_size: [3, 5, 10, 1_000, 10_000, 25_000, 35_000, 50_000, 100_000].to_vec(),
-            pager_size_index: 3,
+            pager_size_index: 5,
             sort_left_panel_index: 0, 
             ctrl_starting_directory: "".to_string(), 
             ctrl_skip_display_dupes: false,
@@ -676,8 +677,9 @@ impl<'a> epi::App for Application<'a> {
         
         self.configure_fonts(ctx);
      
+        let starting_dir = "/Users/matthew/zz/file_types/";
          
-        let dfer = return_dfer2("/Users/matthew/zz/file_types/", self.filter_search_filetype);
+        let dfer = return_dfer2(starting_dir, self.filter_search_filetype);
          
         println!("dfer::length::{:?}", &dfer.data_set.len());
         let start = Instant::now();
@@ -721,7 +723,7 @@ impl<'a> epi::App for Application<'a> {
         let duration = start.elapsed();
         println!("Time elapsed in expensive_function() is: .iter()::{:?}", duration);
  
-        self.ctrl_starting_directory = "/Users/matthew/zz/".to_string(); 
+        self.ctrl_starting_directory = starting_dir.to_string(); 
   
         self.b = d2;
         self.c = vec![];
@@ -916,7 +918,8 @@ impl<'a> epi::App for Application<'a> {
                 { 
                     ui.ctx().output().cursor_icon = egui::CursorIcon::Wait;
 
-                    let path = std::env::current_dir().unwrap();
+                    //let path = std::env::current_dir().unwrap();
+                    let path = home::home_dir().unwrap();
                     let res = rfd::FileDialog::new()
                         // .add_filter("text", &["txt", "rs"])
                         .set_directory(&path)
