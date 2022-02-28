@@ -6,7 +6,7 @@ mod gui;
 use crate::enums::enums::FileAction;
 use futures::executor; // 0.3.1
 use std::{sync::Arc, time::Instant};
-
+ 
 fn return_dfer2(path: &str, filters: [bool; 5]) -> finder::finder::Finder {
     let mut ff = finder::finder::Finder::new();
 
@@ -31,24 +31,24 @@ fn filter_hashmap_by_filetype(
 
         v.retain(|x| x.file_type == ft);
 
-        if v.is_empty(){
+        if v.is_empty() {
             d2.data_set.remove(&k);
         }
     }
 
     d2
 }
- 
+
 #[tokio::main]
 async fn main() {
-    //let start = Instant::now();
-    let mut flag_filters = [true; 5];
+   
+    /* let mut flag_filters = [true; 5];
     flag_filters[3] = false;
     let dfer = return_dfer2("/Users/matthew/Documents/", flag_filters);
     let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::Document);
-    //println!("#len::{:#?}", d2.data_set.len());
+    println!("#len::{:#?}", d2.data_set.len());
 
-    //  flag_counters =  [flag_audio,flag_document,flag_image,flag_other,flag_video]
+    // [flag_audio,flag_document,flag_image,flag_other,flag_video]
     let mut flag_counters = [0; 6];
     for collection in d2.data_set.iter() {
         let (_, v) = collection;
@@ -74,30 +74,43 @@ async fn main() {
                 enums::enums::FileType::All => {}
             }
         }
-    }
-    //println!("#flag_counters::{:#?}",flag_counters );
-    //let duration = start.elapsed();
-
+    }  */  
+ 
     //*************************************************************************************************************************************/
     //sandbox();
-
-    let quot = 29/ 5;
-    let rem = 29 % 5;
-  
-    println!("quot={}", quot);
-    println!("rem={}", rem);
-
+ 
     //*************************************************************************************************************************************/
-    let mut options = eframe::NativeOptions::default();
+ 
+    let icon_bytes = include_bytes!("icon2.png"); 
+    let icon = load_icon(&icon_bytes.to_vec());
+
+    //let mut options = eframe::NativeOptions::default();
+    let mut options = eframe::NativeOptions {
+        icon_data: icon,
+        ..Default::default()
+    };
+
     options.initial_window_size = Some(egui::Vec2::new(1300.0, 750.0));
     eframe::run_native(Box::new(gui::Application::default()), options);
 
     //*************************************************************************************************************************************/
-    //println!("#collections::{:#?}", dfer.data_set );
-
-    //println!("Time elapsed in expensive_function() is: {:?}", duration);
+ 
 }
 
+pub fn load_icon(icon_bytes: &Vec<u8>) -> Option<eframe::epi::IconData> {
+    if let Ok(image) = image::load_from_memory(icon_bytes) {
+        let image = image.to_rgba8();
+        let (width, height) = image.dimensions();
+        Some(eframe::epi::IconData {
+            width,
+            height,
+            rgba: image.as_raw().to_vec(),
+        })
+    } else {
+        None
+    }
+}
+ 
 #[allow(dead_code)]
 fn spawnings() {
     let counter = Arc::new(std::sync::Mutex::new(0));

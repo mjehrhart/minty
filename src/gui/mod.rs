@@ -21,6 +21,9 @@ use file::meta::*;
 //use std::sync::mpsc::channel;
 //use std::thread;
 
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
+
 extern crate byte_unit;
 use byte_unit::{Byte};
 
@@ -114,52 +117,65 @@ impl<'a> Application<'_> {
                 { 
                 };
 
-                ui.label("Filter"); 
-    
-                ui.scope(|ui| { 
-                    ui.style_mut().wrap = Some(true);
-                    ui.visuals_mut().extreme_bg_color = egui::Color32::from_rgb(230,230,230);       
-
-                    let response = ui.add( egui::TextEdit::singleline(&mut self.fuzzy_search).code_editor()
-                        .desired_width(300.));
-
-                    if response.changed() {
-                        
-                    }
-                    if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
-                        println!("lost focus");
-                        println!("{:?}", &self.fuzzy_search);
-                    }
-                });     
+                self.fuzzy_search_ui(ui);
+                     
         });
  
             ui.add_space(4.);
     }
 
-    fn drop_down_pager_size(&mut self, ui: &mut egui::Ui) {
+    fn fuzzy_search_ui(&mut self, ui: &mut egui::Ui){
+        ui.label("Filter"); 
+    
+        ui.scope(|ui| { 
+            ui.style_mut().wrap = Some(true);
+            ui.visuals_mut().extreme_bg_color = egui::Color32::from_rgb(230,230,230);       
+
+            let response = ui.add( egui::TextEdit::singleline(&mut self.fuzzy_search).code_editor()
+                .desired_width(300.));
+
+            if response.changed() {
+                //Do nothing here
+            }
+            if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                println!("lost focus");
+                println!("{:?}", &self.fuzzy_search);
  
-        egui::Grid::new("grid_pager_size")
-            .striped(true)
-            .num_columns(2)
-            //.spacing(egui::Vec2::new(16.0, 20.0))
-            .show(ui, |ui| {
-  
-                if egui::ComboBox::new("siome123d","")
-                    .width(100.0) 
-                    .show_index(
-                        ui,
-                        &mut self.pager_size_index,
-                        self.pager_size.len(), 
-                        |i| self.pager_size[i].to_owned().to_string(),
-                    )
-                    .clicked()
-                { 
-                };  
-                ui.end_row();  
-            });
+                //self.selected_staging_index
+
+                if !self.staging.is_empty(){
+ 
+                    let vec = &self.configure_comparison_vec(vec![]); 
+
+                    let matcher = SkimMatcherV2::default();
+                    let  mut vec_temp:Vec<DupeTable> = vec![];
+                    for dt in vec{
+                        let res = matcher.fuzzy_match(&dt.name, &self.fuzzy_search); 
+                        match res{
+                            Some(_) => { 
+                                vec_temp.push(dt.clone());
+                        }
+                            None => {},
+                        }
+                    }
+
+                    println!("vec_temp {:#?}", vec_temp );
+
+                    //Reset Pager
+                    self.selected_staging_index = 0;
+                    
+                    //Step next  
+                    //self.e  = vec_temp; //self.configure_comparison_vec(vec![]);  
+                    //Application::<'a>::sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut self.staging[self.selected_staging_index]);
+                    
+                    self.staging = vec![ vec_temp ];
+                }
+
+
+            }
+        }); 
     }
-
-
+  
     fn sort_dupe_table(sort_left_panel_index: i32, vec: &mut Vec<DupeTable>){
         match sort_left_panel_index {
             0 => {
@@ -524,7 +540,7 @@ impl<'a> Application<'_> {
         }
          
             if ui
-                .add_sized([100.0, 35.0], egui::Button::new(text))
+                .add_sized([140.0, 35.0], egui::Button::new(text))
                 .clicked()
             {
                 match index {
@@ -550,9 +566,6 @@ impl<'a> Application<'_> {
                 //Step next  
                 self.e  = self.configure_comparison_vec(vec![]);  
                 Application::<'a>::sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut self.staging[self.selected_staging_index]);
-                
-                //Reset Pager
-                self.selected_staging_index = 0;
                  
                 //println!("self.e {:?}", self.e);  
             }
