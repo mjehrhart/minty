@@ -42,6 +42,7 @@ pub struct DupeTable {
 
 #[derive(Clone)]
 pub struct Application<'a> {
+    time_elapsed: std::time::Duration, 
     fuzzy_search: String,
     e: Vec<DupeTable>, 
     staging: Vec<Vec<DupeTable>>,
@@ -63,9 +64,11 @@ pub struct Application<'a> {
     theme_prefer_light_mode: bool,
 }
 
+//move into own page
 impl<'a> Application<'_> {
     pub fn default() -> Self {
         Self { 
+            time_elapsed: std::time::Duration::new(0, 0),
             fuzzy_search: String::from(""),
             e: vec![], 
             staging: vec![], 
@@ -82,7 +85,7 @@ impl<'a> Application<'_> {
             ctrl_skip_display_dupes: false,
             ctrl_filter_filetype: enums::enums::FileType::All,
             filter_search_filetype: [true, true, true, false, true],     // [flag_audio,flag_document,flag_image,flag_other,flag_video]
-            filters_filetype_counters: [0;6],                           // [flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
+            filters_filetype_counters: [0;6],                            // [flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
             theme_prefer_light_mode: true,
             status_filetype_counters: false,
         }
@@ -119,6 +122,14 @@ impl<'a> Application<'_> {
                 };
 
                 self.fuzzy_search_ui(ui);
+
+                //Search Time Duration
+                ui.label("Search Duration" ); 
+                ui.scope(|ui| { 
+                    ui.visuals_mut().override_text_color = Some(egui::Color32::DARK_GREEN);   
+                    let t = format!("{:?} seconds", self.time_elapsed.as_secs_f64().to_string());
+                    ui.label(t );
+                }); // the temporary settings are reverted here
                      
         });
  
@@ -678,6 +689,8 @@ impl<'a> epi::App for Application<'a> {
         self.configure_fonts(ctx);
      
         let starting_dir = "/Users/matthew/zz/file_types/";
+        let starting_dir = "/Users/matthew/Library"; 
+        //let starting_dir ="/Users/matthew/.Trash";
          
         let dfer = return_dfer2(starting_dir, self.filter_search_filetype);
          
@@ -858,7 +871,8 @@ impl<'a> epi::App for Application<'a> {
 
                     self.b = d2;
                     let duration = start.elapsed();
-                    println!("Time elapsed in expensive_function() is: (update) {:?}", duration);
+                    //println!("Time elapsed in expensive_function() is: (update) {:?}", duration);
+                    self.time_elapsed = duration;
                 }
 
                 if ui
@@ -943,8 +957,7 @@ impl<'a> epi::App for Application<'a> {
 
                     ui.label(self.ctrl_starting_directory.to_string());
                 }); // the temporary settings are reverted here
-                 
-  
+                  
                 ui.end_row();
             });
 

@@ -19,13 +19,13 @@ pub mod finder {
     use std::sync::{Arc, Mutex};
     use std::time::{Duration, Instant};
 
+    use jwalk::WalkDir;
+    use rayon::prelude::*;
+    use regex::Regex;
     use tokio::io::{self, AsyncReadExt};
     use tokio::task;
     use tokio::{fs, join};
     use walkdir::DirEntry;
-    use jwalk::WalkDir;
-    use rayon::prelude::*;
-    use regex::Regex;
 
     use std::sync::mpsc::channel;
     use std::thread;
@@ -65,7 +65,7 @@ pub mod finder {
                         //// Sample Return Tuple
                         //// (("bab96be13d9817317006e73bae07987c", "01/06/2018", 0, 446984, "image"),)
 
-                        if !dir_entry.file_type.is_dir() {
+                    if !dir_entry.file_type.is_dir() {
                             let path: String = dir_entry.path().as_path().display().to_string();
 
                             let ft = Finder::get_file_type(&path);
@@ -120,6 +120,7 @@ pub mod finder {
             }
         }
         pub async fn rayon_walk_dir(&mut self, path: &str, filter: [bool; 5]) {
+            
             pub fn walk_files(
                 base_path: &std::path::Path,
                 chunk_size: u64,
@@ -133,65 +134,95 @@ pub mod finder {
                     base_path: PathBuf,
                     chunk_size: u64,
                     filter: [bool; 5],
-                ) {
-                    for entry in std::fs::read_dir(base_path).unwrap() {
-                        let entry = entry.unwrap();
-                        let path = entry.path();
-                        let metadata = entry.metadata().unwrap();
-                        if metadata.is_dir() {
-                            let move_entries = entries.clone();
-                            s.spawn(move |s1| read_dir(move_entries, s1, path, chunk_size, filter));
-                        } else if metadata.is_file() {
-                            let p = path.as_path().display().to_string();
+                ) 
+                {
+                    
+                    let bp = base_path.clone();
+                    let temp = base_path.file_name().clone().unwrap(); 
+                    let path: String =String::from(temp.to_string_lossy());
+             
+                    let flag = path.starts_with(".");
+                    if !flag {
 
-                            //**** Testing File Type Filtering for Search */
-                            //array =  [flag_audio,flag_document,flag_image,flag_other,flag_video
+                        for entry in std::fs::read_dir(bp)
+                            .unwrap_or_else(|e| panic!("Error reading dir: {:?}, {}", temp, e))
+                        {
+                            let entry = entry;
+    
+                            match &entry {
+                                Ok(ent) => { 
+                                    let entry = entry.unwrap();
+                                    let path = entry.path();
 
-                            let ft = Finder::get_file_type(&p);
-                            let mut flag_continue = false;
-                            match ft {
-                                FileType::Audio => {
-                                    if filter[0] == true {
-                                        flag_continue = true;
+                                    if !path.starts_with("."){ 
+                                        let metadata = entry.metadata().unwrap();
+
+                                        if metadata.is_dir() {
+                                            let move_entries = entries.clone();
+                                            s.spawn(move |s1| {
+                                                read_dir(move_entries, s1, path, chunk_size, filter)
+                                            });
+                                        } else if metadata.is_file() {
+                                            let p = path.as_path().display().to_string();
+
+                                            let ft = Finder::get_file_type(&p);
+                                            let mut flag_continue = false;
+                                            match ft {
+                                                FileType::Audio => {
+                                                    if filter[0] == true {
+                                                        flag_continue = true;
+                                                    }
+                                                }
+                                                FileType::Document => {
+                                                    if filter[1] == true {
+                                                        flag_continue = true;
+                                                    }
+                                                }
+                                                FileType::Image => {
+                                                    if filter[2] {
+                                                        flag_continue = true;
+                                                    }
+                                                }
+                                                FileType::Other => {
+                                                    if filter[3] {
+                                                        flag_continue = true;
+                                                    }
+                                                }
+                                                FileType::Video => {
+                                                    if filter[4] {
+                                                        flag_continue = true;
+                                                    }
+                                                }
+                                                FileType::None => {}
+                                                FileType::All => {
+                                                    flag_continue = true;
+                                                }
+                                            }
+
+                                            if flag_continue == true {
+                                                let async_results =
+                                                    Finder::async_file_metadata_join(&p, chunk_size);
+                                                let x = futures::executor::block_on({ async_results });
+
+                                                entries.lock().unwrap().push(x);
+                                            }
+                                        }
+                                        
                                     }
                                 }
-                                FileType::Document => {
-                                    if filter[1] == true {
-                                        flag_continue = true;
-                                    }
+                                Err(e) => {
+                                    println!("{:?}", &entry);
+                                    println!("####################{}", e);
                                 }
-                                enums::FileType::Image => {
-                                    if filter[2] {
-                                        flag_continue = true;
-                                    }
-                                }
-                                FileType::Other => {
-                                    if filter[3] {
-                                        flag_continue = true;
-                                    }
-                                }
-                                FileType::Video => {
-                                    if filter[4] {
-                                        flag_continue = true;
-                                    }
-                                }
-
-                                FileType::None => {}
-                                FileType::All => {
-                                    flag_continue = true;
-                                }
-                            }
-
-                            if flag_continue == true {
-                                let async_results =
-                                    Finder::async_file_metadata_join(&p, chunk_size);
-                                let x = futures::executor::block_on({ async_results });
-
-                                entries.lock().unwrap().push(x);
                             }
                         }
+                    
                     }
-                }
+                    else {
+                        println!("path::{}",path);
+                    }
+                
+                } //end of read_dir()
 
                 let base_path = base_path.to_owned();
                 let move_entries = entries.clone();
@@ -254,6 +285,8 @@ pub mod finder {
                     }
                 }
             }
+
+            //Ok(())
         }
         pub async fn slow_walk_dir(&mut self, path: &str) {
             fn is_hidden(entry: &walkdir::DirEntry) -> bool {
@@ -547,4 +580,31 @@ pub mod finder {
     pub fn type_of<T>(_: T) -> &'static str {
         std::any::type_name::<T>()
     }
-} 
+}
+
+
+//TODO: address permission Read issues that stem from here
+                    //let mut perms = fs::metadata(&base_path).permissions()?;
+                    //let metadata = std::fs::metadata(&base_path).unwrap();
+                    //metadata.permissions().set_readonly(true);
+                    //println!("{:?}", &base_path);
+                    // perms.set_readonly(true);
+                    // fs::set_permissions("foo.txt", perms)?;
+                    // // Ok(())
+
+                    //let temp = base_path.clone();
+ 
+                    // let f = File::open("hello.txt");
+
+                    // let f = match f {
+                    //     Ok(file) => file,
+                    //     Err(error) => match error.kind() {
+                    //         ErrorKind::NotFound => match File::create("hello.txt") {
+                    //             Ok(fc) => fc,
+                    //             Err(e) => panic!("Problem creating the file: {:?}", e),
+                    //         },
+                    //         other_error => {
+                    //             panic!("Problem opening the file: {:?}", other_error)
+                    //         }
+                    //     },
+                    // };

@@ -94,7 +94,7 @@ async fn main() {
         ..Default::default()
     };
 
-    options.initial_window_size = Some(egui::Vec2::new(1300.0, 750.0));
+    options.initial_window_size = Some(egui::Vec2::new(1300.0, 800.0));
     eframe::run_native(Box::new(gui::Application::default()), options);
 
     //*************************************************************************************************************************************/
