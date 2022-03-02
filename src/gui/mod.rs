@@ -692,23 +692,17 @@ impl<'a> epi::App for Application<'a> {
     }
 
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
-        
+        let start = Instant::now();
         self.configure_fonts(ctx);
      
         let starting_dir = "/Users/matthew/zz/file_types/";
         let starting_dir = "/Users/matthew/Library"; 
         //let starting_dir ="/Users/matthew/.Trash";
          
-        let dfer = return_dfer2(starting_dir, self.filter_search_filetype);
-         
+        /* let dfer = return_dfer2(starting_dir, self.filter_search_filetype); 
         println!("dfer::length::{:?}", &dfer.data_set.len());
-        let start = Instant::now();
-        let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);
-  
-        let duration = start.elapsed();
-        self.time_elapsed = duration;
-        //println!("Time elapsed in expensive_function() is: filter_hashmap_by_filetype {:?}", duration);
-
+         
+        let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);  
         //let mut flag_counters = [0;6]; 
         for collection in d2.data_set.iter(){
             let (_,v) = collection;
@@ -739,15 +733,14 @@ impl<'a> epi::App for Application<'a> {
                     enums::enums::FileType::All => {},
                 }
             }
-        }
+        } 
 
         let duration = start.elapsed();
-        println!("Time elapsed in expensive_function() is: .iter()::{:?}", duration);
- 
-        self.ctrl_starting_directory = starting_dir.to_string(); 
-  
+        self.time_elapsed = duration;   
+        self.ctrl_starting_directory = starting_dir.to_string();  
         self.b = d2;
         self.c = vec![];
+         */
 
          
         //*************************************************************//
