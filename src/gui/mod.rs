@@ -1,4 +1,51 @@
-//use crate::file::meta;
+
+pub mod view;
+pub mod controller;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* //use crate::file::meta;
 
 use super::*;
 use egui::{ Color32, ScrollArea};
@@ -1187,4 +1234,4 @@ fn truncate(s: &str, max_chars: usize) -> &str {
                         })
                         .inner
                 })
-                .inner; */
+                .inner; */ */

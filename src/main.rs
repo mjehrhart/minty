@@ -4,6 +4,8 @@ mod finder;
 mod gui;
 
 use home;
+use crate::gui::controller::Application;
+
 use crate::enums::enums::FileAction;
 use futures::executor; // 0.3.1
 use std::{sync::Arc, time::Instant};
@@ -97,7 +99,7 @@ async fn main() {
     };
 
     options.initial_window_size = Some(egui::Vec2::new(1300.0, 800.0));
-    eframe::run_native(Box::new(gui::Application::default()), options);
+    eframe::run_native(Box::new(gui::controller::Application::default()), options);
 
     //*************************************************************************************************************************************/
  
