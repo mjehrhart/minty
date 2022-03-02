@@ -42,6 +42,7 @@ pub struct DupeTable {
 
 #[derive(Clone)]
 pub struct Application<'a> {
+    //scroll_area: Option<egui::containers::scroll_area::ScrollAreaOutput<()>>,
     time_elapsed: std::time::Duration, 
     fuzzy_search: String,
     e: Vec<DupeTable>, 
@@ -68,6 +69,7 @@ pub struct Application<'a> {
 impl<'a> Application<'_> {
     pub fn default() -> Self {
         Self { 
+            //scroll_area: None,
             time_elapsed: std::time::Duration::new(0, 0),
             fuzzy_search: String::from(""),
             e: vec![], 
@@ -326,12 +328,12 @@ impl<'a> Application<'_> {
             style.visuals.faint_bg_color = egui::Color32::from_rgb(83, 115, 146);                   
             _ctx.set_style(style);
 
-            //ScrollArea aTable
+            //ScrollArea aTable ScrollAreaOutput<()>
             let row_height = 35.0;
-            ScrollArea::vertical()
+            let sa = ScrollArea::vertical()
                 .id_source("main_scroll")
                 .auto_shrink([false, false]) 
-                .max_height(515.)
+                .max_height(500.)
                 .stick_to_right()
                 .show_rows(ui, row_height, num_rows, |ui, row_range| { 
                     for row in row_range {
@@ -366,6 +368,7 @@ impl<'a> Application<'_> {
                             });    
                     }
                 }); //end of scroll 
+ 
         }  
     } 
 
@@ -580,6 +583,10 @@ impl<'a> Application<'_> {
                 Application::<'a>::sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut self.staging[self.selected_staging_index]);
                  
                 //println!("self.e {:?}", self.e);  
+
+                //scroll_offset --> self.offset = Some(Vec2::new(0.0, offset));
+                //scroll_area = scroll_area.vertical_scroll_offset(0.0);
+                //ui.scroll_to_cursor(Some(egui::Align::TOP));
             }
     }
  
@@ -699,7 +706,8 @@ impl<'a> epi::App for Application<'a> {
         let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);
   
         let duration = start.elapsed();
-        println!("Time elapsed in expensive_function() is: filter_hashmap_by_filetype {:?}", duration);
+        self.time_elapsed = duration;
+        //println!("Time elapsed in expensive_function() is: filter_hashmap_by_filetype {:?}", duration);
 
         //let mut flag_counters = [0;6]; 
         for collection in d2.data_set.iter(){

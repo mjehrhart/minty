@@ -54,175 +54,114 @@ pub mod finder {
             }
         }
         //Directory Walker
-        pub async fn fast_walk_dir(&mut self, path: &str) {
-            for dir_entry_result in jwalk::WalkDirGeneric::<((), Option<u64>)>::new(&path)
-                .skip_hidden(true)
-                .parallelism(jwalk::Parallelism::RayonNewPool(20))
-                .process_read_dir(|_, dir_entry_results| {})
-            {
-                match dir_entry_result {
-                    Ok(dir_entry) => {
-                        //// Sample Return Tuple
-                        //// (("bab96be13d9817317006e73bae07987c", "01/06/2018", 0, 446984, "image"),)
+        pub async fn rayon_walk_dir(&mut self, path: &str, filter: [bool; 5]) {
+            //*************************************************************************************************************************//
+            fn read_dir(
+                entries: Arc<Mutex<Vec<(String, String, String, String, u64, u64)>>>,
+                s: &rayon::Scope<'_>,
+                base_path: PathBuf,
+                chunk_size: u64,
+                filter: [bool; 5],
+            ) {
+                //Works Belows
+                let bp = base_path.clone();
+                let temp = base_path.file_name().clone().unwrap();
+                let path: String = String::from(temp.to_string_lossy());
 
-                    if !dir_entry.file_type.is_dir() {
-                            let path: String = dir_entry.path().as_path().display().to_string();
+                let flag = !path.starts_with(".");
+                if flag {
+                    // for entry in std::fs::read_dir(&bp).unwrap_or_else(|e| {
+                    //     panic!("Error reading dir: {:?}, {}", temp, e);
+                    //     //process::exit(1);
+                    // })
+                    // {
 
-                            let ft = Finder::get_file_type(&path);
+                    // }
 
-                            let mut flag_continue = false;
-                            match ft {
-                                enums::FileType::Image => {
-                                    flag_continue = true;
-                                }
-                                FileType::Audio => {
-                                    flag_continue = true;
-                                }
-                                FileType::Video => {
-                                    flag_continue = true;
-                                }
-                                FileType::Document => {}
-                                FileType::Other => {}
-                                FileType::None => {}
-                                FileType::All => {
-                                    flag_continue = true;
+                    for entry in std::fs::read_dir(bp).unwrap_or_else(|e| {
+                        panic!("Error reading dir: {:?}, {}", temp, e);
+                        //process::exit(1);
+                    }) {
+                        let entry = entry;
+
+                        match &entry {
+                            Ok(ent) => {
+                                let entry = entry.unwrap();
+                                let path = entry.path();
+
+                                if !path.starts_with(".") {
+                                    let metadata = entry.metadata().unwrap();
+
+                                    if metadata.is_dir() {
+                                        let move_entries = entries.clone();
+                                        s.spawn(move |s1| {
+                                            read_dir(move_entries, s1, path, chunk_size, filter)
+                                        });
+                                    } else if metadata.is_file() {
+                                        let p = path.as_path().display().to_string();
+
+                                        let ft = Finder::get_file_type(&p);
+                                        let mut flag_continue = false;
+                                        match ft {
+                                            FileType::Audio => {
+                                                if filter[0] == true {
+                                                    flag_continue = true;
+                                                }
+                                            }
+                                            FileType::Document => {
+                                                if filter[1] == true {
+                                                    flag_continue = true;
+                                                }
+                                            }
+                                            FileType::Image => {
+                                                if filter[2] {
+                                                    flag_continue = true;
+                                                }
+                                            }
+                                            FileType::Other => {
+                                                if filter[3] {
+                                                    flag_continue = true;
+                                                }
+                                            }
+                                            FileType::Video => {
+                                                if filter[4] {
+                                                    flag_continue = true;
+                                                }
+                                            }
+                                            FileType::None => {}
+                                            FileType::All => {
+                                                flag_continue = true;
+                                            }
+                                        }
+
+                                        if flag_continue == true {
+                                            let async_results =
+                                                Finder::async_file_metadata_join(&p, chunk_size);
+                                            let x = futures::executor::block_on({ async_results });
+
+                                            entries.lock().unwrap().push(x);
+                                        }
+                                    }
                                 }
                             }
-
-                            //Continue if FileType equals "...."
-                            if flag_continue == true {
-                                let async_results =
-                                    Finder::async_file_metadata_join(&path, self.chunk_size);
-                                // let (fnc, fc, fsp, fs, ft) =  x.await;
-                                let x = tokio::join!(async_results);
-
-                                let mut meta = meta::Meta {
-                                    checksum: x.0 .2.clone(),
-                                    name: x.0 .0,
-                                    path: x.0 .1,
-                                    status: FileAction::None,
-                                    ui_event_status: false,
-                                    file_points: x.0 .4,
-                                    file_size: x.0 .5,
-                                    file_date: x.0 .3,
-                                    file_type: FileType::None,
-                                };
-
-                                self.insert_item(x.0 .2, meta);
+                            Err(e) => {
+                                println!("{:?}", &entry);
+                                println!("####################{}", e);
                             }
                         }
                     }
-                    Err(error) => {
-                        println!("Read dir_entry error: {}", error);
-                        //return "Error".to_string()
-                    }
+                } else {
+                    //do nothing
                 }
-            }
-        }
-        pub async fn rayon_walk_dir(&mut self, path: &str, filter: [bool; 5]) {
-            
+            } 
+
+            //*************************************************************************************************************************//
             pub fn walk_files(
                 base_path: &std::path::Path,
                 chunk_size: u64,
                 filter: [bool; 5],
             ) -> std::vec::Vec<(String, String, String, String, u64, u64)> {
                 let entries = Arc::new(Mutex::new(Vec::new()));
-
-                fn read_dir(
-                    entries: Arc<Mutex<Vec<(String, String, String, String, u64, u64)>>>,
-                    s: &rayon::Scope<'_>,
-                    base_path: PathBuf,
-                    chunk_size: u64,
-                    filter: [bool; 5],
-                ) 
-                {
-                    
-                    let bp = base_path.clone();
-                    let temp = base_path.file_name().clone().unwrap(); 
-                    let path: String =String::from(temp.to_string_lossy());
-             
-                    let flag = path.starts_with(".");
-                    if !flag {
-
-                        for entry in std::fs::read_dir(bp)
-                            .unwrap_or_else(|e| panic!("Error reading dir: {:?}, {}", temp, e))
-                        {
-                            let entry = entry;
-    
-                            match &entry {
-                                Ok(ent) => { 
-                                    let entry = entry.unwrap();
-                                    let path = entry.path();
-
-                                    if !path.starts_with("."){ 
-                                        let metadata = entry.metadata().unwrap();
-
-                                        if metadata.is_dir() {
-                                            let move_entries = entries.clone();
-                                            s.spawn(move |s1| {
-                                                read_dir(move_entries, s1, path, chunk_size, filter)
-                                            });
-                                        } else if metadata.is_file() {
-                                            let p = path.as_path().display().to_string();
-
-                                            let ft = Finder::get_file_type(&p);
-                                            let mut flag_continue = false;
-                                            match ft {
-                                                FileType::Audio => {
-                                                    if filter[0] == true {
-                                                        flag_continue = true;
-                                                    }
-                                                }
-                                                FileType::Document => {
-                                                    if filter[1] == true {
-                                                        flag_continue = true;
-                                                    }
-                                                }
-                                                FileType::Image => {
-                                                    if filter[2] {
-                                                        flag_continue = true;
-                                                    }
-                                                }
-                                                FileType::Other => {
-                                                    if filter[3] {
-                                                        flag_continue = true;
-                                                    }
-                                                }
-                                                FileType::Video => {
-                                                    if filter[4] {
-                                                        flag_continue = true;
-                                                    }
-                                                }
-                                                FileType::None => {}
-                                                FileType::All => {
-                                                    flag_continue = true;
-                                                }
-                                            }
-
-                                            if flag_continue == true {
-                                                let async_results =
-                                                    Finder::async_file_metadata_join(&p, chunk_size);
-                                                let x = futures::executor::block_on({ async_results });
-
-                                                entries.lock().unwrap().push(x);
-                                            }
-                                        }
-                                        
-                                    }
-                                }
-                                Err(e) => {
-                                    println!("{:?}", &entry);
-                                    println!("####################{}", e);
-                                }
-                            }
-                        }
-                    
-                    }
-                    else {
-                        println!("path::{}",path);
-                    }
-                
-                } //end of read_dir()
 
                 let base_path = base_path.to_owned();
                 let move_entries = entries.clone();
@@ -233,60 +172,75 @@ pub mod finder {
                 let entries = Arc::try_unwrap(entries).unwrap().into_inner().unwrap();
                 entries
             }
+            //*************************************************************************************************************************//
 
             let path = std::path::Path::new(path);
-            let mut x = walk_files(path, self.chunk_size, filter);
-            for item in x {
-                let metadata = std::fs::metadata(&item.1).unwrap();
 
-                if !metadata.is_dir() {
-                    let path: String = item.1.clone();
+            let flag = !path.starts_with(".");
 
-                    let ft = Finder::get_file_type(&path);
-
-                    let mut flag_continue = false;
-                    match ft {
-                        enums::FileType::Image => {
-                            flag_continue = true;
-                        }
-                        FileType::Audio => {
-                            flag_continue = true;
-                        }
-                        FileType::Video => {
-                            flag_continue = true;
-                        }
-                        FileType::Document => {
-                            flag_continue = true;
-                        }
-                        FileType::Other => {
-                            flag_continue = true;
-                        }
-                        FileType::None => {}
-                        FileType::All => {
-                            flag_continue = true;
-                        }
+            if true{
+                let mut x = walk_files(path, self.chunk_size, filter);
+                for item in x {
+ 
+                    let metadata = std::fs::metadata(&item.1); //unwrap()
+                    match metadata{
+                        Ok(md) => {
+                            if !md.is_dir() {
+                                let path: String = item.1.clone();
+        
+                                let ft = Finder::get_file_type(&path);
+        
+                                let mut flag_continue = false;
+                                match ft {
+                                    enums::FileType::Image => {
+                                        flag_continue = true;
+                                    }
+                                    FileType::Audio => {
+                                        flag_continue = true;
+                                    }
+                                    FileType::Video => {
+                                        flag_continue = true;
+                                    }
+                                    FileType::Document => {
+                                        flag_continue = true;
+                                    }
+                                    FileType::Other => {
+                                        flag_continue = true;
+                                    }
+                                    FileType::None => {}
+                                    FileType::All => {
+                                        flag_continue = true;
+                                    }
+                                }
+        
+                                //Continue if FileType equals "...."
+                                if flag_continue == true {
+                                    let mut meta = meta::Meta {
+                                        checksum: item.2.clone(),
+                                        name: item.0,
+                                        path: item.1,
+                                        status: FileAction::None,
+                                        ui_event_status: false,
+                                        file_points: item.4,
+                                        file_size: item.5,
+                                        file_date: item.3,
+                                        file_type: ft,
+                                    };
+        
+                                    self.insert_item(item.2, meta);
+                                }
+                            }
+                        
+                        },
+                        Err(_) => {
+                            println!("Some big error here. but does the program exit???")
+                        },
                     }
 
-                    //Continue if FileType equals "...."
-                    if flag_continue == true {
-                        let mut meta = meta::Meta {
-                            checksum: item.2.clone(),
-                            name: item.0,
-                            path: item.1,
-                            status: FileAction::None,
-                            ui_event_status: false,
-                            file_points: item.4,
-                            file_size: item.5,
-                            file_date: item.3,
-                            file_type: ft,
-                        };
-
-                        self.insert_item(item.2, meta);
-                    }
+                     
                 }
             }
-
-            //Ok(())
+          
         }
         pub async fn slow_walk_dir(&mut self, path: &str) {
             fn is_hidden(entry: &walkdir::DirEntry) -> bool {
@@ -339,8 +293,6 @@ pub mod finder {
                             }
                         }
 
-                        //// ("IMG_0440.JPG", "/Users/matthew/Temp/IMG_0440.JPG", "bab96be13d9817317006e73bae07987c", "01/06/2018", 0, 446984)
-
                         //Continue if FileType equals "...."
                         if flag_continue == true {
                             let async_results =
@@ -359,24 +311,74 @@ pub mod finder {
                                 file_date: x.3,
                                 file_type: FileType::None,
                             };
-
-                            //self.sandbox();
-                            //self.insert_item(x.2, meta);
-                            // if !self.data_set.contains_key(&x.2) {
-                            //     let mut vector: Vec<Meta> = vec![];
-                            //     meta.status = FileAction::Read;
-                            //     vector.push(meta);
-                            //     //self.data_set.insert(x.2, vector);
-                            // } else {
-                            //     if let Some(v) = self.data_set.get_mut(&x.2) {
-                            //         meta.ui_event_status = true;
-                            //         meta.status = FileAction::Delete;
-                            //         v.push(meta);
-                            //     }
-                            // }
                         }
                     }
                 });
+        }
+        pub async fn fast_walk_dir(&mut self, path: &str) {
+            for dir_entry_result in jwalk::WalkDirGeneric::<((), Option<u64>)>::new(&path)
+                .skip_hidden(true)
+                .parallelism(jwalk::Parallelism::RayonNewPool(20))
+                .process_read_dir(|_, dir_entry_results| {})
+            {
+                match dir_entry_result {
+                    Ok(dir_entry) => {
+                        //// Sample Return Tuple
+                        //// (("bab96be13d9817317006e73bae07987c", "01/06/2018", 0, 446984, "image"),)
+
+                        if !dir_entry.file_type.is_dir() {
+                            let path: String = dir_entry.path().as_path().display().to_string();
+
+                            let ft = Finder::get_file_type(&path);
+
+                            let mut flag_continue = false;
+                            match ft {
+                                enums::FileType::Image => {
+                                    flag_continue = true;
+                                }
+                                FileType::Audio => {
+                                    flag_continue = true;
+                                }
+                                FileType::Video => {
+                                    flag_continue = true;
+                                }
+                                FileType::Document => {}
+                                FileType::Other => {}
+                                FileType::None => {}
+                                FileType::All => {
+                                    flag_continue = true;
+                                }
+                            }
+
+                            //Continue if FileType equals "...."
+                            if flag_continue == true {
+                                let async_results =
+                                    Finder::async_file_metadata_join(&path, self.chunk_size);
+                                // let (fnc, fc, fsp, fs, ft) =  x.await;
+                                let x = tokio::join!(async_results);
+
+                                let mut meta = meta::Meta {
+                                    checksum: x.0 .2.clone(),
+                                    name: x.0 .0,
+                                    path: x.0 .1,
+                                    status: FileAction::None,
+                                    ui_event_status: false,
+                                    file_points: x.0 .4,
+                                    file_size: x.0 .5,
+                                    file_date: x.0 .3,
+                                    file_type: FileType::None,
+                                };
+
+                                self.insert_item(x.0 .2, meta);
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        println!("Read dir_entry error: {}", error);
+                        //return "Error".to_string()
+                    }
+                }
+            }
         }
         //ActionEvents
         fn insert_item(&mut self, checksum: String, mut meta: Meta) {
@@ -571,7 +573,7 @@ pub mod finder {
                 }
             }
 
-            println!("get_file_type)_ ::{}", &path);
+            //println!("get_file_type)_ ::{}", &path);
             let ext = ext.unwrap().to_lowercase();
         }
     }
@@ -582,29 +584,28 @@ pub mod finder {
     }
 }
 
-
 //TODO: address permission Read issues that stem from here
-                    //let mut perms = fs::metadata(&base_path).permissions()?;
-                    //let metadata = std::fs::metadata(&base_path).unwrap();
-                    //metadata.permissions().set_readonly(true);
-                    //println!("{:?}", &base_path);
-                    // perms.set_readonly(true);
-                    // fs::set_permissions("foo.txt", perms)?;
-                    // // Ok(())
+//let mut perms = fs::metadata(&base_path).permissions()?;
+//let metadata = std::fs::metadata(&base_path).unwrap();
+//metadata.permissions().set_readonly(true);
+//println!("{:?}", &base_path);
+// perms.set_readonly(true);
+// fs::set_permissions("foo.txt", perms)?;
+// // Ok(())
 
-                    //let temp = base_path.clone();
- 
-                    // let f = File::open("hello.txt");
+//let temp = base_path.clone();
 
-                    // let f = match f {
-                    //     Ok(file) => file,
-                    //     Err(error) => match error.kind() {
-                    //         ErrorKind::NotFound => match File::create("hello.txt") {
-                    //             Ok(fc) => fc,
-                    //             Err(e) => panic!("Problem creating the file: {:?}", e),
-                    //         },
-                    //         other_error => {
-                    //             panic!("Problem opening the file: {:?}", other_error)
-                    //         }
-                    //     },
-                    // };
+// let f = File::open("hello.txt");
+
+// let f = match f {
+//     Ok(file) => file,
+//     Err(error) => match error.kind() {
+//         ErrorKind::NotFound => match File::create("hello.txt") {
+//             Ok(fc) => fc,
+//             Err(e) => panic!("Problem creating the file: {:?}", e),
+//         },
+//         other_error => {
+//             panic!("Problem opening the file: {:?}", other_error)
+//         }
+//     },
+// };

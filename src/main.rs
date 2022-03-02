@@ -17,6 +17,8 @@ fn return_dfer2(path: &str, filters: [bool; 5]) -> finder::finder::Finder {
     // let mut filters = [true; 5];
     // filters[2] = false; //ignore images (ie test)
     //Block to connect to async values
+
+    //rayon_walk_dir
     executor::block_on(ff.rayon_walk_dir(path, filters));
 
     ff.adjust_file_order();
