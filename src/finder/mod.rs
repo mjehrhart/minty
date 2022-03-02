@@ -65,10 +65,10 @@ pub mod finder {
             ) {
                 //Works Belows
                 let bp = base_path.clone();
-                let temp = base_path.file_name().clone().unwrap();
+                let temp = base_path.file_name().unwrap();
                 let path: String = String::from(temp.to_string_lossy());
 
-                let flag = !path.starts_with(".");
+                let flag = !path.starts_with('.');
                 if flag {
                     // for entry in std::fs::read_dir(&bp).unwrap_or_else(|e| {
                     //     panic!("Error reading dir: {:?}, {}", temp, e);
@@ -104,12 +104,12 @@ pub mod finder {
                                         let mut flag_continue = false;
                                         match ft {
                                             FileType::Audio => {
-                                                if filter[0] == true {
+                                                if filter[0] {
                                                     flag_continue = true;
                                                 }
                                             }
                                             FileType::Document => {
-                                                if filter[1] == true {
+                                                if filter[1] {
                                                     flag_continue = true;
                                                 }
                                             }
