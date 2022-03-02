@@ -696,10 +696,10 @@ impl<'a> epi::App for Application<'a> {
         self.configure_fonts(ctx);
      
         let starting_dir = "/Users/matthew/zz/file_types/";
-        let starting_dir = "/Users/matthew/Library"; 
+        //let starting_dir = "/Users/matthew/Library"; 
         //let starting_dir ="/Users/matthew/.Trash";
          
-        /* let dfer = return_dfer2(starting_dir, self.filter_search_filetype); 
+        let dfer = return_dfer2(starting_dir, self.filter_search_filetype); 
         println!("dfer::length::{:?}", &dfer.data_set.len());
          
         let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);  
@@ -740,7 +740,7 @@ impl<'a> epi::App for Application<'a> {
         self.ctrl_starting_directory = starting_dir.to_string();  
         self.b = d2;
         self.c = vec![];
-         */
+        
 
          
         //*************************************************************//
