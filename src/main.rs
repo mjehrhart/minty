@@ -48,23 +48,15 @@ async fn main() {
 
     //*************************************************************************************************************************************/
     //sandbox();
-
-    let x = home::home_dir();
-    println!("{:?}", x);
-
-    // fn icon_data(&self) -> Option<epi::IconData> {
-    //     let icon_bytes = include_bytes!("icon2.png");
-    //     let x = load_icon(&icon_bytes.to_vec())
-    // }
-
+ 
     //*************************************************************************************************************************************/
-    let icon_bytes = include_bytes!("icon.ico");
-    let icon = load_icon(&icon_bytes.to_vec());
+    //let icon_bytes = include_bytes!("icon.ico");
+    //let icon = load_icon(&icon_bytes.to_vec());
  
   
     //let mut options = eframe::NativeOptions::default();
     let mut options = eframe::NativeOptions {
-        icon_data: icon,
+        //icon_data: icon,
         ..Default::default()
     };
 
