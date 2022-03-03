@@ -2,7 +2,10 @@
 name = "minty"
 version = "0.1.0"
 edition = "2021"
- 
+authors = ["mjehrhart <https://github.com/mjehrhart>"]
+
+build="build.rs"
+
 [dependencies]
 #error-chain = "0.12.4"
 #reqwest = { version = "0.11", features = ["json"] }
@@ -21,6 +24,9 @@ byte-unit = "4.0.3"
 fuzzy-matcher = "0.3.7"
 image = "0.24.1"
 home = "0.5.3"
+
+[build-dependencies]
+winres = "0.1"
 
 [profile.dev]
 opt-level = 3

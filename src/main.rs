@@ -58,7 +58,7 @@ async fn main() {
     // }
 
     //*************************************************************************************************************************************/
-    let icon_bytes = include_bytes!("icon.png");
+    let icon_bytes = include_bytes!("icon.ico");
     let icon = load_icon(&icon_bytes.to_vec());
  
   
@@ -73,6 +73,7 @@ async fn main() {
 
     //*************************************************************************************************************************************/
 }
+
 
 pub fn load_icon(icon_bytes: &Vec<u8>) -> Option<eframe::epi::IconData> {
     if let Ok(image) = image::load_from_memory(icon_bytes) {
@@ -105,7 +106,7 @@ fn return_dfer2(path: &str, filters: [bool; 5]) -> finder::finder::Finder {
     ff
 }
 
-
+#[allow(dead_code)]
 fn filter_hashmap_by_filetype(
     mut d2: finder::finder::Finder,
     ft: enums::enums::FileType,

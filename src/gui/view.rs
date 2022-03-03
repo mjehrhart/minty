@@ -28,7 +28,7 @@ pub struct DupeTable {
 //#![windows_subsystem = "windows"] 
 impl<'a> epi::App for Application<'a> {
     fn name(&self) -> &str {
-        "FUgly"
+        "Yafda"
     }
 
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
