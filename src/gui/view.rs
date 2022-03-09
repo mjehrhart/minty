@@ -37,7 +37,7 @@ impl<'a> epi::App for Application<'a> {
      
         //let starting_dir = "/Users/matthew/Library"; 
         //let starting_dir ="/Users/matthew/.Trash";
-        let starting_dir = "/Users/matthew/zz/file_types/";
+        let starting_dir = "/Users/matthew/";
         self.ctrl_starting_directory = starting_dir.to_string();
          
          /* 
