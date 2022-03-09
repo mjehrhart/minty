@@ -357,7 +357,7 @@ impl<'a> Application<'_> {
                     match &date {
                         Ok(_) => {}
                         Err(e) => {
-                            println!("derror::ui::mod.rs::10001{} ", e);
+                            //println!("derror::ui::mod.rs::10001{} ", e);
                             break;
                         }
                     }
