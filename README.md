@@ -1,5 +1,5 @@
 # minty
-File deduplication built in rust with a rust gui.
+Minty is a superb file deduplication app built in rust with a rust gui. Minty uses parrellism for a speedy and safe deduplication search.  The app reads the content of each file and uses that to compare files to each other.  This makes for a truly wonderful app which allows you the comfort to know you can trust the data provided to you.
 
 ![minty](https://user-images.githubusercontent.com/97703291/162547172-83b1883a-37ec-4e9f-ac58-638c2cdf0e43.gif)
 
