@@ -1,11 +1,18 @@
 use super::view::DupeTable;
-use crate::{enums::enums::{self, FileAction}, file, finder::finder};
- 
-use egui::{ Color32, ScrollArea}; 
-use eframe::{  egui, epi::{self, Storage}, };
-  
+use crate::{
+    enums::enums::{self, FileAction},
+    file,
+    finder::finder,
+};
+
+use eframe::{
+    egui,
+    epi::{self, Storage},
+};
+use egui::{Color32, ScrollArea};
+
 extern crate byte_unit;
-use byte_unit::{Byte};
+use byte_unit::Byte;
 
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
@@ -16,6 +23,7 @@ use home::home_dir;
 #[derive(Clone)]
 pub struct Application<'a> {
     //scroll_area: Option<egui::containers::scroll_area::ScrollAreaOutput<()>>,
+    pub update_screen: bool,
     pub time_elapsed: std::time::Duration,
     pub fuzzy_search: String,
     pub e: Vec<DupeTable>,
@@ -40,7 +48,8 @@ pub struct Application<'a> {
 
 impl<'a> Application<'_> {
     pub fn default() -> Self {
-        Self { 
+        Self {
+            update_screen: false,
             time_elapsed: std::time::Duration::new(0, 0),
             fuzzy_search: String::from(""),
             e: vec![],
@@ -203,6 +212,7 @@ impl<'a> Application<'_> {
     }
 
     pub fn left_side_panel(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
+        //
         fn get_table_fields(dt: DupeTable) -> (String, String, String) {
             let mut a_total = 0;
             for item in &dt.list {
@@ -434,9 +444,11 @@ impl<'a> Application<'_> {
             .clicked()
         {
             //Remove file from os first
+            let mut deleted_count = 0;
             for row in &self.c {
                 if row.status == FileAction::Delete {
                     std::fs::remove_file(&row.path).ok();
+                    deleted_count += 1;
                 }
             }
 
@@ -454,6 +466,30 @@ impl<'a> Application<'_> {
                     || (x.status == FileAction::Read)
                     || (x.status == FileAction::Save)
             });
+
+            //Force screen update
+            self.update_screen = true;
+
+            // Update file count after deletion of left side menu
+            match self.ctrl_filter_filetype {
+                enums::FileType::Image => {
+                    self.filters_filetype_counters[2] = self.filters_filetype_counters[2] - deleted_count; 
+                }
+                enums::FileType::Audio => {
+                    self.filters_filetype_counters[0] = self.filters_filetype_counters[0] - deleted_count;
+                }
+                enums::FileType::Video => {
+                    self.filters_filetype_counters[4] = self.filters_filetype_counters[4] - deleted_count;
+                }
+                enums::FileType::Document => {
+                    self.filters_filetype_counters[1] = self.filters_filetype_counters[1] - deleted_count;
+                }
+                enums::FileType::Other => {
+                    self.filters_filetype_counters[3] = self.filters_filetype_counters[3] - deleted_count;
+                }
+                enums::FileType::None => { }
+                enums::FileType::All => { }
+            }
         };
     }
 
@@ -653,7 +689,6 @@ impl<'a> Application<'_> {
 
 //Helpers
 fn filter_hashmap_by_filetype(mut d2: finder::Finder, ft: enums::FileType) -> finder::Finder {
- 
     for collection in d2.data_set.clone().into_iter() {
         let (k, mut v) = collection;
 
@@ -665,7 +700,7 @@ fn filter_hashmap_by_filetype(mut d2: finder::Finder, ft: enums::FileType) -> fi
             }
         }
     }
- 
+
     d2
 }
 

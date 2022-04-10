@@ -1,11 +1,9 @@
  
 use crate::file::meta::Meta;
 use crate::{finder::finder, };
-use crate::{enums, };
-//use file::meta::*;
-//use super::*;
+use crate::{enums, }; 
 use super::controller::Application;
-
+use home::home_dir; 
 use egui::{ Color32, }; 
   use eframe::{
     egui,
@@ -35,54 +33,12 @@ impl<'a> epi::App for Application<'a> {
        
         self.configure_fonts(ctx);
      
-        //let starting_dir = "/Users/matthew/Library"; 
+        let starting_dir = "/Users/matthew/Library"; 
         //let starting_dir ="/Users/matthew/.Trash";
         let starting_dir = "/Users/matthew/zz/file_types/";
+        let starting_dir = home::home_dir().unwrap().as_path().display().to_string();
         self.ctrl_starting_directory = starting_dir.to_string();
-         
-         /* 
-        let start = std::time::Instant::now();
-        let dfer = return_dfer2(starting_dir, self.filter_search_filetype); 
-        println!("dfer::length::{:?}", &dfer.data_set.len());
-         
-        let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::All);  
-        //let mut flag_counters = [0;6]; 
-        for collection in d2.data_set.iter(){
-            let (_,v) = collection;
-
-            for row in v{
-                match row.file_type{
-                    enums::enums::FileType::Audio => {
-                        //flag_counters[0] += 1;
-                        self.filters_filetype_counters[0] += 1;
-                    } 
-                    enums::enums::FileType::Document => {
-                        //flag_counters[1] += 1;
-                        self.filters_filetype_counters[1] += 1;
-                    },
-                    enums::enums::FileType::Image => {
-                        //flag_counters[2] += 1;
-                        self.filters_filetype_counters[2] += 1;
-                    }, 
-                    enums::enums::FileType::Other => {
-                        //flag_counters[3] += 1;
-                        self.filters_filetype_counters[3] += 1;
-                    },
-                    enums::enums::FileType::Video => {
-                        //flag_counters[4] += 1;
-                        self.filters_filetype_counters[4] += 1;
-                    },
-                    enums::enums::FileType::None => {},
-                    enums::enums::FileType::All => {},
-                }
-            }
-        } 
-
-        let duration = start.elapsed();
-        self.time_elapsed = duration;    
-        self.b = d2;
-        self.c = vec![]; */
-         
+          
         //*************************************************************//
   
         //Light Theme
@@ -110,7 +66,40 @@ impl<'a> epi::App for Application<'a> {
 
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
 
+        //********************************************************************************************* */
+        //********************************************************************************************* */
+        //Current Focus
+        if self.update_screen {
+            println!("{}", self.update_screen);
+            self.update_screen = false;
+              
+            println!(".{:?}", self.selected_staging_index);
+            println!("..{:?}", self.ctrl_filter_filetype);
+            println!("...{:?}", self.filter_search_filetype);
+            println!("....{:?}", self.filters_filetype_counters);
+   
+            //Step 0
+            self.status_filetype_counters = true;
 
+            //Step 1
+            let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+            self.a = d2;
+
+            //Reset Pager
+            self.selected_staging_index = 0;
+
+            //Step next
+            self.e = self.configure_comparison_vec(vec![]);
+            Application::<'a>::sort_dupe_table(
+                self.sort_left_panel_index.try_into().unwrap(),
+                &mut self.staging[self.selected_staging_index],
+            );
+            
+        } 
+
+
+        //********************************************************************************************* */
+        //********************************************************************************************* */
         fn filter_hashmap_by_filetype(
             mut d2: finder::Finder,
             ft: enums::enums::FileType,
@@ -198,6 +187,7 @@ impl<'a> epi::App for Application<'a> {
                     self.time_elapsed = duration;
                 }
 
+                //Button Theme
                 if ui
                     .add( egui::Button::new( egui::RichText::new("🔵 Theme").color(egui::Color32::from_rgb(0,191,255)),
                     ))
@@ -207,6 +197,7 @@ impl<'a> epi::App for Application<'a> {
                     self.theme_prefer_light_mode = !self.theme_prefer_light_mode ;
                     if !self.theme_prefer_light_mode {
                         ctx.set_visuals(egui::Visuals::dark()); 
+                       // println!("dark:theme");
                     } else {
                         ctx.set_visuals(egui::Visuals::light());
                     }
@@ -271,6 +262,7 @@ impl<'a> epi::App for Application<'a> {
                         None => (),
                     };
                 } 
+
                 //Directory Label
                 ui.scope(|ui| {
                     
@@ -284,9 +276,9 @@ impl<'a> epi::App for Application<'a> {
                 ui.end_row();
             });
 
-            //let sep = egui::Separator::default().spacing(5.);
+            let sep = egui::Separator::default().spacing(5.);
             //ui.add_sized([143.0, 1.0], sep);
-            //ui.add(sep);
+            ui.add(sep);
 
             ui.add_space(4.0);
         });
@@ -304,8 +296,9 @@ impl<'a> epi::App for Application<'a> {
 
         egui::TopBottomPanel::bottom("bottom_panel").frame(my_frame2).show(ctx, |ui| {
        
+            //Todo - add in Delete All Checked
             ui.with_layout(egui::Layout::right_to_left(), |ui| {
-                self.delete_all(ui);
+                //self.delete_all(ui);
                  
              });
              ui.add_space(2.);
@@ -313,6 +306,7 @@ impl<'a> epi::App for Application<'a> {
 
         egui::CentralPanel::default().frame(my_frame2).show(ctx, |ui| {
               
+           // UI Test Area
            /*  ui
                 .scope(|ui| {
                     let background_frame =  egui::containers::Frame {
@@ -331,8 +325,9 @@ impl<'a> epi::App for Application<'a> {
                         })
                         .inner
                 })
-                .inner;
-            */
+                .inner; */
+                
+           
  
             ui.with_layout(
                 egui::Layout::from_main_dir_and_cross_align(

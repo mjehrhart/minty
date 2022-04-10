@@ -4,59 +4,25 @@ mod finder;
 mod gui;
 
 use crate::gui::controller::Application;
-use home;
+use home::home_dir;
 
 use crate::enums::enums::FileAction;
 use futures::executor; // 0.3.1
+use image;
 use std::{sync::Arc, time::Instant};
- 
+
 #[tokio::main]
-async fn main() {
-    /* let mut flag_filters = [true; 5];
-    flag_filters[3] = false;
-    let dfer = return_dfer2("/Users/matthew/Documents/", flag_filters);
-    let d2 = filter_hashmap_by_filetype(dfer, enums::enums::FileType::Document);
-    println!("#len::{:#?}", d2.data_set.len());
+async fn main() { 
 
-    // [flag_audio,flag_document,flag_image,flag_other,flag_video]
-    let mut flag_counters = [0; 6];
-    for collection in d2.data_set.iter() {
-        let (_, v) = collection;
+    let icon_data2 = open_icon_data("/Users/matthew/dev/projects/minty/merged.png");
+     
 
-        for row in v {
-            match row.file_type {
-                enums::enums::FileType::Audio => {
-                    flag_counters[0] += 1;
-                }
-                enums::enums::FileType::Document => {
-                    flag_counters[1] += 1;
-                }
-                enums::enums::FileType::Image => {
-                    flag_counters[2] += 1;
-                }
-                enums::enums::FileType::Other => {
-                    flag_counters[3] += 1;
-                }
-                enums::enums::FileType::Video => {
-                    flag_counters[4] += 1;
-                }
-                enums::enums::FileType::None => {}
-                enums::enums::FileType::All => {}
-            }
-        }
-    }  */
+    let icon_bytes = include_bytes!("/Users/matthew/dev/projects/minty/merged.png");
+    let icon = load_icon(&icon_bytes.to_vec());
 
-    //*************************************************************************************************************************************/
-    //sandbox();
- 
-    //*************************************************************************************************************************************/
-    //let icon_bytes = include_bytes!("icon.ico");
-    //let icon = load_icon(&icon_bytes.to_vec());
- 
-  
     //let mut options = eframe::NativeOptions::default();
     let mut options = eframe::NativeOptions {
-        //icon_data: icon,
+        icon_data: icon_data2,
         ..Default::default()
     };
 
@@ -66,6 +32,21 @@ async fn main() {
     //*************************************************************************************************************************************/
 }
 
+pub fn open_icon_data(path: &str) -> std::option::Option<eframe::epi::IconData> {
+    let image_buffer = image::open(path).unwrap();
+    let img = image_buffer.to_rgba8();
+    let size = (img.width() as u32, img.height() as u32);
+    let pixels = img.into_vec();
+    let icon_data = eframe::epi::IconData {
+        rgba: pixels.clone(),
+        width: size.0,
+        height: size.1,
+    };
+    //println!("{:?}", pixels);
+    println!("{:?}", size.0);
+    println!("{:?}", size.1);
+    Some(icon_data)
+}
 
 pub fn load_icon(icon_bytes: &Vec<u8>) -> Option<eframe::epi::IconData> {
     if let Ok(image) = image::load_from_memory(icon_bytes) {
@@ -115,7 +96,6 @@ fn filter_hashmap_by_filetype(
 
     d2
 }
-
 
 #[allow(dead_code)]
 fn spawnings() {
