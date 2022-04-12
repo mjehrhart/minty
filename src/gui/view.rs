@@ -1,9 +1,9 @@
- 
 use crate::file::meta::Meta;
 use crate::{finder::finder, };
 use crate::{enums, }; 
 use super::controller::Application;
 use home::home_dir; 
+
 use egui::{ Color32, }; 
   use eframe::{
     egui,
@@ -26,16 +26,13 @@ pub struct DupeTable {
 //#![windows_subsystem = "windows"] 
 impl<'a> epi::App for Application<'a> {
     fn name(&self) -> &str {
-        "Yafda"
+        "Minty"
     }
 
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
        
         self.configure_fonts(ctx);
-     
-        let starting_dir = "/Users/matthew/Library"; 
-        //let starting_dir ="/Users/matthew/.Trash";
-        let starting_dir = "/Users/matthew/zz/file_types/";
+      
         let starting_dir = home::home_dir().unwrap().as_path().display().to_string();
         self.ctrl_starting_directory = starting_dir.to_string();
           
@@ -62,6 +59,9 @@ impl<'a> epi::App for Application<'a> {
             .push("Droid Sans Mono".to_owned()); 
 
         ctx.set_fonts(fonts); 
+
+        //// Align bottom panel by running these commands 
+        self.e = self.configure_comparison_vec(vec![]); 
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
@@ -69,35 +69,10 @@ impl<'a> epi::App for Application<'a> {
         //********************************************************************************************* */
         //********************************************************************************************* */
         //Current Focus
-        if self.update_screen {
-            println!("{}", self.update_screen);
-            self.update_screen = false;
-              
-            println!(".{:?}", self.selected_staging_index);
-            println!("..{:?}", self.ctrl_filter_filetype);
-            println!("...{:?}", self.filter_search_filetype);
-            println!("....{:?}", self.filters_filetype_counters);
-   
-            //Step 0
-            self.status_filetype_counters = true;
-
-            //Step 1
-            let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
-            self.a = d2;
-
-            //Reset Pager
-            self.selected_staging_index = 0;
-
-            //Step next
-            self.e = self.configure_comparison_vec(vec![]);
-            Application::<'a>::sort_dupe_table(
-                self.sort_left_panel_index.try_into().unwrap(),
-                &mut self.staging[self.selected_staging_index],
-            );
-            
+        if self.update_screen { 
+            self.update_screen = false; 
         } 
-
-
+ 
         //********************************************************************************************* */
         //********************************************************************************************* */
         fn filter_hashmap_by_filetype(
@@ -119,11 +94,19 @@ impl<'a> epi::App for Application<'a> {
             d2
         }
 
+        let my_frame0 = egui::containers::Frame {
+            margin: egui::style::Margin { left: 5., right: 5., top: 5., bottom: 2. },
+            rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
+            shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
+            fill: Color32::from_rgb(37, 69, 95), //83, 115, 146
+            stroke: egui::Stroke::new(0.0, Color32::GOLD),
+        };
+
         let my_frame1 = egui::containers::Frame {
             margin: egui::style::Margin { left: 5., right: 5., top: 5., bottom: 2. },
             rounding: egui::Rounding { nw: 1.0, ne: 1.0, sw: 1.0, se: 1.0 },
             shadow: eframe::epaint::Shadow { extrusion: 0.0, color: Color32::YELLOW },
-            fill: Color32::from_rgb(244, 244, 244), //83, 115, 146
+            fill: Color32::from_rgb(83, 115, 146), //83, 115, 146
             stroke: egui::Stroke::new(0.0, Color32::GOLD),
         };
 
@@ -135,13 +118,27 @@ impl<'a> epi::App for Application<'a> {
             stroke: egui::Stroke::new(0.0, Color32::GOLD),
         };
 
-        egui::TopBottomPanel::top("top_panel").frame(my_frame2).show(ctx, |ui| {
-            ui.add_space(4.0);
+        
+
+        egui::SidePanel::left("my_left_side_panel").frame(my_frame0).show(ctx, |ui| {
+  
+            ui.add_space(42.);
+            //Menu Filters
+            self.set_file_type_button(ui, "All Files", 5);
+            self.set_file_type_button(ui, "Audio", 0);
+            self.set_file_type_button(ui, "Documents", 1);
+            self.set_file_type_button(ui, "Images", 2);
+            self.set_file_type_button(ui, "Other", 3);
+            self.set_file_type_button(ui, "Videos", 4); 
+        });
+
+        egui::TopBottomPanel::top("top_panel").frame(my_frame1).show(ctx, |ui| {
+            ui.add_space(7.0); //4
   
             egui::Grid::new("top_menu_grid").show(ui, |ui| {
                
                 if ui
-                    .add( egui::Button::new( egui::RichText::new("⎈ Run").color(egui::Color32::from_rgb(0,191,255)),
+                    .add( egui::Button::new( egui::RichText::new("⎈ Run ").color(egui::Color32::from_rgb(0,191,255)),
                     ))
                     .clicked()
                 {
@@ -185,10 +182,31 @@ impl<'a> epi::App for Application<'a> {
                     let duration = start.elapsed();
                     //println!("Time elapsed in expensive_function() is: (update) {:?}", duration);
                     self.time_elapsed = duration;
+
+                    //// test area //// Load grid after clicking "Run"
+                    //Step 0 - TODO this appears to be a deadlink
+                    self.status_filetype_counters = true;
+
+                    //Step 1
+                    let d2 = filter_hashmap_by_filetype(self.b.clone(), self.ctrl_filter_filetype);
+                    self.a = d2;
+
+                    //Reset Pager
+                    self.selected_staging_index = 0;
+
+                    //Step next
+                    self.e = self.configure_comparison_vec(vec![]);
+
+                    Application::<'a>::sort_dupe_table(
+                        self.sort_left_panel_index.try_into().unwrap(),
+                        &mut self.staging[self.selected_staging_index],
+                    );
+                    ////
                 }
 
                 //Button Theme
-                if ui
+                //Todo - add to another version 
+                /* if ui
                     .add( egui::Button::new( egui::RichText::new("🔵 Theme").color(egui::Color32::from_rgb(0,191,255)),
                     ))
                     .clicked()
@@ -201,35 +219,35 @@ impl<'a> epi::App for Application<'a> {
                     } else {
                         ctx.set_visuals(egui::Visuals::light());
                     }
-                }
+                } */
 
                 //[flag_audio,flag_document,flag_image,flag_other,flag_video] 
                 if ui
-                    .checkbox(&mut self.filter_search_filetype[0], "Audio")
+                    .checkbox(&mut self.filter_search_filetype[0], " Audio")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | 3gp | aa | aac | aax | act | aiff | amr|  ape | au | flac | gsm | m4a | m4b | m4p | mp3 | mpc | mogg | ogg | raw | sln | tta | voc | vox | wav | wma |");
                     })
                     .clicked() { }
                 if ui
-                    .checkbox(&mut self.filter_search_filetype[1], "Documents")
+                    .checkbox(&mut self.filter_search_filetype[1], " Documents")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | doc | docx | txt | xls | pdf | ppt | vcs | zip |");
                     })
                     .clicked() { }
                 if ui
-                    .checkbox(&mut self.filter_search_filetype[2], "Images")
+                    .checkbox(&mut self.filter_search_filetype[2], " Images")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | dds | jpg | jpeg | heic | heif | png | psd | tif | tiff| tga | thm |");
                     })
                     .clicked() { }
                 if ui
-                    .checkbox(&mut self.filter_search_filetype[3], "Other")
+                    .checkbox(&mut self.filter_search_filetype[3], " Other")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: anything not covered by the other filters. Checking this box can significantly increase the search time.");
                     })
                     .clicked() { } 
                 if ui
-                    .checkbox(&mut self.filter_search_filetype[4], "Videos")
+                    .checkbox(&mut self.filter_search_filetype[4], " Videos")
                     .on_hover_ui(|ui| {
                         ui.label("Extensions:: | avi | mpg | mpeg | mov | mp4 |");
                     })
@@ -238,7 +256,7 @@ impl<'a> epi::App for Application<'a> {
                 //Open Directory
                 if ui
                     .add(egui::Button::new(
-                        egui::RichText::new("Select Directory")
+                        egui::RichText::new(" Select Directory ")
                              .color( egui::Color32::from_rgb(0,191,255) )
                             .monospace(),
                     ))
@@ -276,22 +294,11 @@ impl<'a> epi::App for Application<'a> {
                 ui.end_row();
             });
 
-            let sep = egui::Separator::default().spacing(5.);
+            ui.add_space(11.0); 
+            //let sep = egui::Separator::default().spacing(5.);
             //ui.add_sized([143.0, 1.0], sep);
-            ui.add(sep);
+            //ui.add(sep);
 
-            ui.add_space(4.0);
-        });
-
-        egui::SidePanel::left("my_left_side_panel").frame(my_frame1).show(ctx, |ui| {
- 
-            //Menu Filters
-            self.set_file_type_button(ui, "All Files", 5);
-            self.set_file_type_button(ui, "Audio", 0);
-            self.set_file_type_button(ui, "Documents", 1);
-            self.set_file_type_button(ui, "Images", 2);
-            self.set_file_type_button(ui, "Other", 3);
-            self.set_file_type_button(ui, "Videos", 4); 
         });
 
         egui::TopBottomPanel::bottom("bottom_panel").frame(my_frame2).show(ctx, |ui| {
@@ -305,30 +312,7 @@ impl<'a> epi::App for Application<'a> {
         });
 
         egui::CentralPanel::default().frame(my_frame2).show(ctx, |ui| {
-              
-           // UI Test Area
-           /*  ui
-                .scope(|ui| {
-                    let background_frame =  egui::containers::Frame {
-                        margin: egui::style::Margin { left: 0., right: 0., top: 0., bottom: 0. },
-                        rounding: egui::Rounding { nw: 0.0, ne: 0.0, sw: 0.0, se: 0.0 },
-                        shadow: eframe::epaint::Shadow { extrusion: 1.0, color: Color32::YELLOW },
-                        fill: Color32::from_rgb(193, 195, 116),
-                        stroke: egui::Stroke::new(0.0, Color32::GOLD),
-                    };
-
-    
-                    //.multiply_with_opacity(config.background_alpha);
-                    background_frame
-                        .show(ui, |ui| {
-                             ui.add_sized([300.0, 35.0], egui::Button::new("test"));
-                        })
-                        .inner
-                })
-                .inner; */
-                
-           
- 
+      
             ui.with_layout(
                 egui::Layout::from_main_dir_and_cross_align(
                     egui::Direction::RightToLeft,
@@ -339,8 +323,7 @@ impl<'a> epi::App for Application<'a> {
                      
                         //DropDown SortBy 
                         self.drop_down_sort_by(ui);
-                         
-
+                       
                         //MainPanel
                         self.left_side_panel(ui, ctx);
 

@@ -153,7 +153,7 @@ pub mod finder {
                 } else {
                     //do nothing
                 }
-            } 
+            }
 
             //*************************************************************************************************************************//
             pub fn walk_files(
@@ -178,18 +178,17 @@ pub mod finder {
 
             let flag = !path.starts_with(".");
 
-            if true{
+            if true {
                 let mut x = walk_files(path, self.chunk_size, filter);
                 for item in x {
- 
                     let metadata = std::fs::metadata(&item.1); //unwrap()
-                    match metadata{
+                    match metadata {
                         Ok(md) => {
                             if !md.is_dir() {
                                 let path: String = item.1.clone();
-        
+
                                 let ft = Finder::get_file_type(&path);
-        
+
                                 let mut flag_continue = false;
                                 match ft {
                                     enums::FileType::Image => {
@@ -212,7 +211,7 @@ pub mod finder {
                                         flag_continue = true;
                                     }
                                 }
-        
+
                                 //Continue if FileType equals "...."
                                 if flag_continue == true {
                                     let mut meta = meta::Meta {
@@ -226,21 +225,17 @@ pub mod finder {
                                         file_date: item.3,
                                         file_type: ft,
                                     };
-        
+
                                     self.insert_item(item.2, meta);
                                 }
                             }
-                        
-                        },
+                        }
                         Err(_) => {
                             println!("Some big error here. but does the program exit???")
-                        },
+                        }
                     }
-
-                     
                 }
             }
-          
         }
         pub async fn slow_walk_dir(&mut self, path: &str) {
             fn is_hidden(entry: &walkdir::DirEntry) -> bool {
@@ -583,29 +578,3 @@ pub mod finder {
         std::any::type_name::<T>()
     }
 }
-
-//TODO: address permission Read issues that stem from here
-//let mut perms = fs::metadata(&base_path).permissions()?;
-//let metadata = std::fs::metadata(&base_path).unwrap();
-//metadata.permissions().set_readonly(true);
-//println!("{:?}", &base_path);
-// perms.set_readonly(true);
-// fs::set_permissions("foo.txt", perms)?;
-// // Ok(())
-
-//let temp = base_path.clone();
-
-// let f = File::open("hello.txt");
-
-// let f = match f {
-//     Ok(file) => file,
-//     Err(error) => match error.kind() {
-//         ErrorKind::NotFound => match File::create("hello.txt") {
-//             Ok(fc) => fc,
-//             Err(e) => panic!("Problem creating the file: {:?}", e),
-//         },
-//         other_error => {
-//             panic!("Problem opening the file: {:?}", other_error)
-//         }
-//     },
-// };

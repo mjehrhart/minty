@@ -66,7 +66,7 @@ impl<'a> Application<'_> {
             ctrl_starting_directory: "".to_string(),
             ctrl_skip_display_dupes: false,
             ctrl_filter_filetype: enums::FileType::All,
-            filter_search_filetype: [true, true, true, false, true], // [flag_audio,flag_document,flag_image,flag_other,flag_video]
+            filter_search_filetype: [true, true, false, false, true], // [flag_audio,flag_document,flag_image,flag_other,flag_video]
             filters_filetype_counters: [0; 6], // [flag_audio,flag_document,flag_image,flag_other,flag_video]; flag_all
             theme_prefer_light_mode: true,
             status_filetype_counters: false,
@@ -84,7 +84,9 @@ impl<'a> Application<'_> {
                     |i| self.sort_left_panel[i].to_owned(),
                 )
                 .clicked()
-            {};
+            {
+                self.update_screen = true;
+            };
             ui.label("Hide Singles");
             ui.add(toggle(&mut self.ctrl_skip_display_dupes));
 
@@ -95,7 +97,9 @@ impl<'a> Application<'_> {
                     self.pager_size[i].to_owned().to_string()
                 })
                 .clicked()
-            {};
+            {
+                //self.update_screen = true;
+            };
 
             self.fuzzy_search_ui(ui);
 
@@ -128,18 +132,21 @@ impl<'a> Application<'_> {
                 //Do nothing here
             }
             if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
-                println!("lost focus");
-                println!("{:?}", &self.fuzzy_search);
+                // println!("lost focus");
+                // println!("{:?}", &self.fuzzy_search);
 
                 //self.selected_staging_index
 
                 if !self.staging.is_empty() {
                     let vec = &self.configure_comparison_vec(vec![]);
 
-                    let matcher = SkimMatcherV2::default();
+                    // let matcher = SkimMatcherV2::default();
                     let mut vec_temp: Vec<DupeTable> = vec![];
+
+                    let regex = regex::Regex::new(&self.fuzzy_search).unwrap();
                     for dt in vec {
-                        let res = matcher.fuzzy_match(&dt.name, &self.fuzzy_search);
+                        // let res = matcher.fuzzy_match(&dt.name, &self.fuzzy_search);
+                        let res = regex.captures(&dt.name);
                         match res {
                             Some(_) => {
                                 vec_temp.push(dt.clone());
@@ -148,7 +155,7 @@ impl<'a> Application<'_> {
                         }
                     }
 
-                    println!("vec_temp {:#?}", vec_temp);
+                    //println!("vec_temp {:#?}", vec_temp);
 
                     //Reset Pager
                     self.selected_staging_index = 0;
@@ -162,34 +169,7 @@ impl<'a> Application<'_> {
             }
         });
     }
-
-    pub fn sort_dupe_table(sort_left_panel_index: i32, vec: &mut Vec<DupeTable>) {
-        match sort_left_panel_index {
-            0 => {
-                vec.sort_by(|a, b| b.count.cmp(&a.count)); //file count
-            }
-            1 => {
-                vec.sort_by(|a, b| b.name.cmp(&a.name)); //file name
-            }
-            2 => {
-                vec.sort_by(|a, b| {
-                    let mut a_total = 0;
-                    for row in &a.list {
-                        a_total += row.file_size;
-                    }
-
-                    let mut b_total = 0;
-                    for row in &b.list {
-                        b_total += row.file_size;
-                    }
-
-                    b_total.cmp(&a_total)
-                });
-            }
-            _ => {}
-        }
-    }
-
+ 
     pub fn pager(&mut self, ui: &mut egui::Ui) {
         let _main_dir = egui::Direction::LeftToRight;
         let _layout = egui::Layout::left_to_right()
@@ -355,7 +335,7 @@ impl<'a> Application<'_> {
         ScrollArea::vertical()
             .id_source("bottom_scroll")
             .auto_shrink([false, false])
-            .max_height(200.)
+            .max_height(220.)
             .stick_to_right()
             .show(ui, |ui| {
                 //let mut counter = 1;
@@ -367,7 +347,7 @@ impl<'a> Application<'_> {
                     match &date {
                         Ok(_) => {}
                         Err(e) => {
-                            println!("derror::ui::mod.rs::10001{} ", e);
+                            //println!("derror::ui::mod.rs::10001{} ", e);
                             break;
                         }
                     }
@@ -451,7 +431,7 @@ impl<'a> Application<'_> {
                     deleted_count += 1;
                 }
             }
-
+ 
             //Remove file element from hashmap for gui first
             self.c.retain(|x| {
                 (x.status == FileAction::None)
@@ -469,6 +449,9 @@ impl<'a> Application<'_> {
 
             //Force screen update
             self.update_screen = true;
+
+            //println!("self.ctrl_filter_filetype :: {:?}", self.ctrl_filter_filetype );
+            //println!("deleted:count:: {}", deleted_count);
 
             // Update file count after deletion of left side menu
             match self.ctrl_filter_filetype {
@@ -571,7 +554,7 @@ impl<'a> Application<'_> {
                 _ => {}
             }
 
-            //Step 0
+            //Step 0 - TODO this appears to be a deadlink
             self.status_filetype_counters = true;
 
             //Step 1
@@ -583,6 +566,7 @@ impl<'a> Application<'_> {
 
             //Step next
             self.e = self.configure_comparison_vec(vec![]);
+
             Application::<'a>::sort_dupe_table(
                 self.sort_left_panel_index.try_into().unwrap(),
                 &mut self.staging[self.selected_staging_index],
@@ -631,7 +615,7 @@ impl<'a> Application<'_> {
                 vec.sort_by(|a, b| b.count.cmp(&a.count)); //file count
             }
             1 => {
-                vec.sort_by(|a, b| b.name.cmp(&a.name)); //file name
+                vec.sort_by(|a, b| a.name.cmp(&b.name)); //file name
             }
             2 => {
                 vec.sort_by(|a, b| {
@@ -658,7 +642,7 @@ impl<'a> Application<'_> {
 
         let pager_size = self.pager_size[self.pager_size_index];
         if vec.len() > pager_size {
-            println!("step 2");
+            //println!("step 2");
             let quot = vec.len() / pager_size;
             let rem = vec.len() % pager_size;
 
@@ -666,7 +650,7 @@ impl<'a> Application<'_> {
                 let y = (i + 1) * pager_size;
                 let x = y - pager_size;
 
-                println!("[x..y]: [{}..{}]", x, y);
+                //println!("[x..y]: [{}..{}]", x, y);
                 let v = vec[x..y].to_vec();
                 self.staging.push(v.clone());
             }
@@ -675,7 +659,7 @@ impl<'a> Application<'_> {
                 let y = quot * pager_size;
                 let x = y - rem;
 
-                println!("![x..y]: [{}..{}]", x, y);
+                //println!("![x..y]: [{}..{}]", x, y);
                 let v = vec[y..].to_vec();
                 self.staging.push(v);
             }
@@ -685,6 +669,35 @@ impl<'a> Application<'_> {
 
         vec
     }
+
+
+    pub fn sort_dupe_table(sort_left_panel_index: i32, vec: &mut Vec<DupeTable>) {
+        match sort_left_panel_index {
+            0 => {
+                vec.sort_by(|a, b| b.count.cmp(&a.count)); //file count
+            }
+            1 => {
+                vec.sort_by(|a, b| b.name.cmp(&a.name)); //file name
+            }
+            2 => {
+                vec.sort_by(|a, b| {
+                    let mut a_total = 0;
+                    for row in &a.list {
+                        a_total += row.file_size;
+                    }
+
+                    let mut b_total = 0;
+                    for row in &b.list {
+                        b_total += row.file_size;
+                    }
+
+                    b_total.cmp(&a_total)
+                });
+            }
+            _ => {}
+        }
+    }
+
 }
 
 //Helpers
@@ -718,7 +731,7 @@ pub fn get_created_date(path: &str) -> std::io::Result<String> {
         Err(_e) => {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "F1l3 N0t f0und",
+                "File not Found: 100221",
             ))
         }
     };
@@ -755,6 +768,7 @@ pub fn toggle_ui(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
 }
 
 pub fn toggle(on: &mut bool) -> impl egui::Widget + '_ {
+     
     move |ui: &mut egui::Ui| toggle_ui(ui, on)
 }
 
