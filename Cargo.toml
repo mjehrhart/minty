@@ -7,8 +7,6 @@ authors = ["mjehrhart <https://github.com/mjehrhart>"]
 build="build.rs"
 
 [dependencies]
-#error-chain = "0.12.4"
-#reqwest = { version = "0.11", features = ["json"] }
 futures = "0.3" # for our async / await blocks
 tokio = { version = "1.16.0", features = ["full"] } 
 rayon = "1.4.1"
@@ -17,8 +15,10 @@ regex = "1"
 chrono = "0.4"
 md5 = "0.7.0"
 jwalk = "0.5"
-eframe = { git = "https://github.com/emilk/egui", branch = "master" }
-egui = { git = "https://github.com/emilk/egui", branch = "master" }
+#eframe = { git = "https://github.com/emilk/egui", branch = "master" }
+#egui = { git = "https://github.com/emilk/egui", branch = "master" }
+eframe = "0.17.0"
+egui = "0.17.0"
 rfd = "0.7.0"
 byte-unit = "4.0.3"
 fuzzy-matcher = "0.3.7"

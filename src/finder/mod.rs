@@ -591,29 +591,3 @@ pub mod finder {
         std::any::type_name::<T>()
     }
 }
-
-//TODO: address permission Read issues that stem from here
-//let mut perms = fs::metadata(&base_path).permissions()?;
-//let metadata = std::fs::metadata(&base_path).unwrap();
-//metadata.permissions().set_readonly(true);
-//println!("{:?}", &base_path);
-// perms.set_readonly(true);
-// fs::set_permissions("foo.txt", perms)?;
-// // Ok(())
-
-//let temp = base_path.clone();
-
-// let f = File::open("hello.txt");
-
-// let f = match f {
-//     Ok(file) => file,
-//     Err(error) => match error.kind() {
-//         ErrorKind::NotFound => match File::create("hello.txt") {
-//             Ok(fc) => fc,
-//             Err(e) => panic!("Problem creating the file: {:?}", e),
-//         },
-//         other_error => {
-//             panic!("Problem opening the file: {:?}", other_error)
-//         }
-//     },
-// };
