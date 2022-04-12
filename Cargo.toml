@@ -2,9 +2,14 @@
 name = "minty"
 version = "0.1.0"
 edition = "2021"
-authors = ["mjehrhart <https://github.com/mjehrhart>"]
+authors = ["mjehrhart <https://github.com/mjehrhart>"] 
+license = "MIT"
+repository = "https://github.com/mjehrhart/minty"
+description = "Extremely fast file deduplication app written in rust using parrellism with a rust gui."
+keywords = ["search", "file", "filesystem", "deduplication", "find"]
 
-build="build.rs"
+
+#build="build.rs"
 
 [dependencies]
 futures = "0.3" # for our async / await blocks
