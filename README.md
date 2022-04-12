@@ -1,9 +1,32 @@
 # minty
-Minty is a superb file deduplication app built in rust with a rust gui. Minty uses parrellism for a speedy and safe deduplication search.  The app reads the content of each file and uses that to compare files to each other.  This makes for a truly wonderful app which allows you the comfort to know you can trust the data provided to you.
+Minty is a superb file deduplication app built in rust with a rust user interface. 
 
-![minty](https://user-images.githubusercontent.com/97703291/162547172-83b1883a-37ec-4e9f-ac58-638c2cdf0e43.gif)
+Minty uses parrellism for a speedy and safe deduplication search.  The app reads the content of each file and then compares the content to other, making for a truly reliable app.
 
-<img width="100%" alt="Screen Shot 2022-04-08 at 4 33 37 PM" src="https://user-images.githubusercontent.com/97703291/162547367-038a6a0a-20ab-4a77-9347-8c080175d62d.png">
+The app searches and compares each individual file. Free up space by removing unwanted files.  
 
-<img width="100%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/162547283-6e01e85b-5ae1-4b71-8545-0e22fc150d4f.png">
+<img width="50%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/163004655-e4ab6314-6010-45c0-984c-8b412cdfdc89.gif">
  
+You can view all duplicate files and batch delete them for each file collection. No more having to delete one file at time!
+
+<img width="50%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/163003275-0b4ed1f3-25bd-470a-abf2-77b312fc67d0.gif">
+
+## Installation
+### Hombebrew
+```
+brew tap mjehrhart/minty
+brew install/minty/minty
+```
+
+### Upgrade
+```
+brew uninstall mjehrhart/minty/minty
+brew install mjehrhart/minty/minty
+```
+
+This app is free to use and is a work in progress.   
+
+If you have any question, comments, or concerns please visit here:  
+https://github.com/mjehrhart/minty/discussions  
+
+
