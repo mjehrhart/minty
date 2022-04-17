@@ -255,11 +255,7 @@ impl<'a> Application<'_> {
 
             (title, adjusted_byte, text_file_count)
         }
-
-        /* /Move all this into a clicked{} event
-        //let mut vec_table = self.configure_comparison_vec(vec![]);
-        //let _ = sort_dupe_table(self.sort_left_panel_index.try_into().unwrap(), &mut vec_table); */
-
+ 
         if !self.staging.is_empty() {
             let mut num_rows = 0;
             let vec_table = self.staging[self.selected_staging_index].clone();
@@ -384,8 +380,7 @@ impl<'a> Application<'_> {
                                 row.status = FileAction::Read;
                             }
 
-                            let collection =
-                                self.b.data_set.get_mut(&self.selected_collection).unwrap();
+                            let collection = self.b.data_set.get_mut(&self.selected_collection).unwrap();
                             for mut row2 in collection {
                                 if row2.path == row.path {
                                     if row.ui_event_status {
@@ -411,7 +406,7 @@ impl<'a> Application<'_> {
 
                     //counter += 1;
                 }
-            }); //end of scroll
+        }); //end of scroll
     }
 
     pub fn delete_collection(&mut self, ui: &mut egui::Ui) {

@@ -56,8 +56,6 @@ pub mod finder {
         //Directory Walker
         pub async fn rayon_walk_dir(&mut self, path: &str, filter: [bool; 5]) {
             //*************************************************************************************************************************//
-            // Flags - hidden directory,
-            //
             //
             fn read_dir(
                 entries: Arc<Mutex<Vec<(String, String, String, String, u64, u64)>>>,
@@ -79,10 +77,13 @@ pub mod finder {
                     }) {
                         let entry = entry;
 
+                        //println!("entry:: {:?}", &filter);
+
                         match &entry {
                             Ok(ent) => {
                                 let entry = entry.unwrap();
                                 let path = entry.path();
+                                let spath = path.as_path().display().to_string();
 
                                 if !path.starts_with(".") {
                                     //let metadata = entry.metadata().unwrap();//
@@ -90,16 +91,50 @@ pub mod finder {
                                     match metadata {
                                         Ok(md) => {
                                             if md.is_dir() {
-                                                let move_entries = entries.clone();
-                                                s.spawn(move |s1| {
-                                                    read_dir(
-                                                        move_entries,
-                                                        s1,
-                                                        path,
-                                                        chunk_size,
-                                                        filter,
-                                                    )
-                                                });
+                                                //If image filter is not checked
+                                                if !filter[2] {
+                                                    let photos = String::from(
+                                                        "/Pictures/Photos Library.photoslibrary",
+                                                    );
+                                                    let user_home = home::home_dir()
+                                                        .unwrap()
+                                                        .as_path()
+                                                        .display()
+                                                        .to_string();
+
+                                                    let joined = [user_home, photos].join("");
+
+                                                    //println!("joined:: {:?}, {:?}", &joined, &path);
+                                                    if spath == joined {
+                                                        println!(
+                                                            "Skipping Photos Library...{:?}",
+                                                            path
+                                                        );
+                                                        // Do nothing and skip this directory
+                                                    } else {
+                                                        let move_entries = entries.clone();
+                                                        s.spawn(move |s1| {
+                                                            read_dir(
+                                                                move_entries,
+                                                                s1,
+                                                                path,
+                                                                chunk_size,
+                                                                filter,
+                                                            )
+                                                        });
+                                                    }
+                                                } else {
+                                                    let move_entries = entries.clone();
+                                                    s.spawn(move |s1| {
+                                                        read_dir(
+                                                            move_entries,
+                                                            s1,
+                                                            path,
+                                                            chunk_size,
+                                                            filter,
+                                                        )
+                                                    });
+                                                }
                                             } else if md.is_file() {
                                                 let p = path.as_path().display().to_string();
 
@@ -191,151 +226,13 @@ pub mod finder {
 
             let flag = !path.starts_with(".");
 
-            if true {
-                let mut x = walk_files(path, self.chunk_size, filter);
-                for item in x {
-                    let metadata = std::fs::metadata(&item.1); //unwrap()
-                    match metadata {
-                        Ok(md) => {
-                            if !md.is_dir() {
-                                let path: String = item.1.clone();
-
-                                let ft = Finder::get_file_type(&path);
-
-                                let mut flag_continue = false;
-                                match ft {
-                                    enums::FileType::Image => {
-                                        flag_continue = true;
-                                    }
-                                    FileType::Audio => {
-                                        flag_continue = true;
-                                    }
-                                    FileType::Video => {
-                                        flag_continue = true;
-                                    }
-                                    FileType::Document => {
-                                        flag_continue = true;
-                                    }
-                                    FileType::Other => {
-                                        flag_continue = true;
-                                    }
-                                    FileType::None => {}
-                                    FileType::All => {
-                                        flag_continue = true;
-                                    }
-                                }
-
-                                //Continue if FileType equals "...."
-                                if flag_continue == true {
-                                    let mut meta = meta::Meta {
-                                        checksum: item.2.clone(),
-                                        name: item.0,
-                                        path: item.1,
-                                        status: FileAction::None,
-                                        ui_event_status: false,
-                                        file_points: item.4,
-                                        file_size: item.5,
-                                        file_date: item.3,
-                                        file_type: ft,
-                                    };
-
-                                    self.insert_item(item.2, meta);
-                                }
-                            }
-                        }
-                        Err(_) => {
-                            println!("Some big error here. but does the program exit???")
-                        }
-                    }
-                }
-            }
-        }
-        pub async fn slow_walk_dir(&mut self, path: &str) {
-            fn is_hidden(entry: &walkdir::DirEntry) -> bool {
-                //.map(|s| s.starts_with("."))
-                entry
-                    .file_name()
-                    .to_str()
-                    .map(|s| s.starts_with('.'))
-                    .unwrap_or(false)
-            }
-
-            //let me = self;
-            walkdir::WalkDir::new(path)
-                .into_iter()
-                .par_bridge()
-                //.filter(|entry| { /* filter if you like */ })
-                .for_each(|ent| {
-                    let entry = ent.unwrap().clone();
-                    if entry.path().is_dir() {
-                        // do nothing if file is a directory
-                    } else {
-                        let name = entry
-                            .path()
-                            .file_name()
-                            .unwrap()
-                            .to_string_lossy()
-                            .into_owned();
-                        let path = entry.path().to_string_lossy().into_owned();
-
-                        //println!("--->{:?}", &entry);
-
-                        let ft = Finder::get_file_type(&path);
-
-                        let mut flag_continue = false;
-                        match ft {
-                            enums::FileType::Image => {
-                                flag_continue = true;
-                            }
-                            FileType::Audio => {
-                                flag_continue = true;
-                            }
-                            FileType::Video => {
-                                flag_continue = true;
-                            }
-                            FileType::Document => {}
-                            FileType::Other => {}
-                            FileType::None => {}
-                            FileType::All => {
-                                flag_continue = true;
-                            }
-                        }
-
-                        //Continue if FileType equals "...."
-                        if flag_continue == true {
-                            let async_results =
-                                Finder::async_file_metadata_join(&path, self.chunk_size);
-                            // let (fnc, fc, fsp, fs, ft) =  x.await;
-                            let x = futures::executor::block_on({ async_results });
-                            println!("--->{:?}", &x);
-                            let mut meta = meta::Meta {
-                                checksum: x.2.clone(),
-                                name: x.0,
-                                path: x.1,
-                                status: FileAction::None,
-                                ui_event_status: false,
-                                file_points: x.4,
-                                file_size: x.5,
-                                file_date: x.3,
-                                file_type: FileType::None,
-                            };
-                        }
-                    }
-                });
-        }
-        pub async fn fast_walk_dir(&mut self, path: &str) {
-            for dir_entry_result in jwalk::WalkDirGeneric::<((), Option<u64>)>::new(&path)
-                .skip_hidden(true)
-                .parallelism(jwalk::Parallelism::RayonNewPool(20))
-                .process_read_dir(|_, dir_entry_results| {})
-            {
-                match dir_entry_result {
-                    Ok(dir_entry) => {
-                        //// Sample Return Tuple
-                        //// (("bab96be13d9817317006e73bae07987c", "01/06/2018", 0, 446984, "image"),)
-
-                        if !dir_entry.file_type.is_dir() {
-                            let path: String = dir_entry.path().as_path().display().to_string();
+            let mut x = walk_files(path, self.chunk_size, filter);
+            for item in x {
+                let metadata = std::fs::metadata(&item.1); //unwrap()
+                match metadata {
+                    Ok(md) => {
+                        if !md.is_dir() {
+                            let path: String = item.1.clone();
 
                             let ft = Finder::get_file_type(&path);
 
@@ -350,8 +247,12 @@ pub mod finder {
                                 FileType::Video => {
                                     flag_continue = true;
                                 }
-                                FileType::Document => {}
-                                FileType::Other => {}
+                                FileType::Document => {
+                                    flag_continue = true;
+                                }
+                                FileType::Other => {
+                                    flag_continue = true;
+                                }
                                 FileType::None => {}
                                 FileType::All => {
                                     flag_continue = true;
@@ -360,34 +261,28 @@ pub mod finder {
 
                             //Continue if FileType equals "...."
                             if flag_continue == true {
-                                let async_results =
-                                    Finder::async_file_metadata_join(&path, self.chunk_size);
-                                // let (fnc, fc, fsp, fs, ft) =  x.await;
-                                let x = tokio::join!(async_results);
-
                                 let mut meta = meta::Meta {
-                                    checksum: x.0 .2.clone(),
-                                    name: x.0 .0,
-                                    path: x.0 .1,
+                                    checksum: item.2.clone(),
+                                    name: item.0,
+                                    path: item.1,
                                     status: FileAction::None,
                                     ui_event_status: false,
-                                    file_points: x.0 .4,
-                                    file_size: x.0 .5,
-                                    file_date: x.0 .3,
-                                    file_type: FileType::None,
+                                    file_points: item.4,
+                                    file_size: item.5,
+                                    file_date: item.3,
+                                    file_type: ft,
                                 };
 
-                                self.insert_item(x.0 .2, meta);
+                                self.insert_item(item.2, meta);
                             }
                         }
                     }
-                    Err(error) => {
-                        println!("Read dir_entry error: {}", error);
-                        //return "Error".to_string()
+                    Err(_) => {
+                        println!("Some big error here. but does the program exit???")
                     }
                 }
             }
-        }
+        } 
         //ActionEvents
         fn insert_item(&mut self, checksum: String, mut meta: Meta) {
             if !self.data_set.contains_key(&checksum) {
@@ -468,19 +363,19 @@ pub mod finder {
             let mut chunk_size = chunk_size;
             match ft {
                 enums::FileType::Image => {
-                    chunk_size = 57344; //57.344kb
+                    chunk_size = 57344;     //57.344kb
                 }
                 FileType::Audio => {
-                    chunk_size = 8192; //8.192kp
+                    chunk_size = 8192;      //8.192kp
                 }
                 FileType::Video => {
-                    chunk_size = 28672; //28.672kb
+                    chunk_size = 28672;     //28.672kb
                 }
                 FileType::Document => {
-                    chunk_size = 163840; //163.84kb  needs to be high for PDF matching
+                    chunk_size = 163840;    //163.84kb  needs to be high for PDF matching
                 }
                 FileType::Other => {
-                    chunk_size = 8192; //8.192kp
+                    chunk_size = 8192;      //8.192kp
                 }
                 FileType::None => {
                     chunk_size = 0;
@@ -499,8 +394,10 @@ pub mod finder {
                         .expect("Unable to read");
 
                     //Checksum
-                    let digest = md5::compute(contents);
-                    let checksum = format!("{:x}", digest);
+                    let digest = blake3::hash(&contents);
+                    //let digest = md5::compute(contents);
+                    //let checksum = format!("{:x}", digest);
+                    let checksum = digest.to_string();
 
                     return checksum;
                 }

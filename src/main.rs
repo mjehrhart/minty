@@ -12,12 +12,15 @@ async fn main() {
     let icon_bytes = include_bytes!("resources/merged.png");
     let icon_data = load_icon(&icon_bytes.to_vec());
  
-    let mut options = eframe::NativeOptions {
+    let options = eframe::NativeOptions {
         icon_data: icon_data,
+        resizable: false,
+        initial_window_size: Some(egui::Vec2::new(1300.0, 800.0)),
+        decorated: true,
+        transparent: true,
         ..Default::default()
     };
-
-    options.initial_window_size = Some(egui::Vec2::new(1300.0, 800.0));
+ 
     eframe::run_native(Box::new(gui::controller::Application::default()), options);
 
     //*************************************************************************************************************************************/
@@ -38,10 +41,12 @@ pub fn load_icon(icon_bytes: &Vec<u8>) -> Option<eframe::epi::IconData> {
 }
 
 fn return_dfer2(path: &str, filters: [bool; 5]) -> finder::finder::Finder {
+
     let mut ff = finder::finder::Finder::new(); 
     //Block to connect to async values 
     executor::block_on(ff.rayon_walk_dir(path, filters));
 
     ff.adjust_file_order();
+
     ff
 }
