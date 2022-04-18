@@ -28,6 +28,12 @@ brew install/minty/minty
 
 #### Upgrade
 ```
+brew update
+brew upgrade mjehrhart/minty/minty
+```
+or
+
+```
 brew uninstall mjehrhart/minty/minty
 brew install mjehrhart/minty/minty
 ```
