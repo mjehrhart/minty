@@ -4,14 +4,16 @@ Project Minty has a new look and feel!!!
 
 <img width="50%" alt="minty2 0 1_1c" src="https://user-images.githubusercontent.com/97703291/163831464-334bcb27-92eb-4576-8728-5a19d5fe090d.png">
  
-Minty is a superb file deduplication app built in rust with a rust user interface. I say superb because it is rust on rust!.
+Minty is an amazingly fast file deduplication app built in rust with a rust user interface. I say superb because it is rust on rust!.
 
 Minty uses parrellism for a speedy and safe deduplication search.  The app reads the content of each file and then compares the content to other, making for a truly reliable app.
 
-The app searches and compares each individual file. Free up space by removing unwanted files.  
+The app searches and compares each individual file. Free up space by removing unwanted files. 
  
-<img width="50%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/163739084-cb9c37ac-442c-49f0-8547-366848c51c32.gif">
+<img width="50%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/163832597-89fc03ec-c1c1-4185-a22c-bf402b29feb4.gif">
  
+Old Look and Feel  
+
 <img width="50%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/163004655-e4ab6314-6010-45c0-984c-8b412cdfdc89.gif">
  
 You can view all duplicate files and batch delete them for each file collection. No more having to delete one file at time!
