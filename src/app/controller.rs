@@ -61,7 +61,7 @@ pub struct Application {
     pub image_run: RetainedImage,
     pub image_timer: RetainedImage,
     pub image: RetainedImage,
-    pub image2: RetainedImage,
+    pub image_delete: RetainedImage,
     //
     pub sort_by: [String; 3],
     pub sort_by_index: usize,
@@ -116,27 +116,27 @@ impl Application {
             fuzzy_search: String::from(""),
             //
             image_checkbox_audios: RetainedImage::from_image_bytes(
-                "Checkbox1",
+                "Audio_Checkbox",
                 include_bytes!("../../resources/unchecked.png"),
             )
             .unwrap(),
             image_checkbox_documents: RetainedImage::from_image_bytes(
-                "Checkbox1",
+                "Document_Checkbox",
                 include_bytes!("../../resources/checked.png"),
             )
             .unwrap(),
             image_checkbox_images: RetainedImage::from_image_bytes(
-                "Checkbox1",
+                "Image_Checkbox",
                 include_bytes!("../../resources/unchecked.png"),
             )
             .unwrap(),
             image_checkbox_others: RetainedImage::from_image_bytes(
-                "Checkbox1",
+                "Other_Checkbox",
                 include_bytes!("../../resources/unchecked.png"),
             )
             .unwrap(),
             image_checkbox_videos: RetainedImage::from_image_bytes(
-                "Checkbox1",
+                "Video_Checkbox",
                 include_bytes!("../../resources/unchecked.png"),
             )
             .unwrap(),
@@ -147,28 +147,28 @@ impl Application {
             )
             .unwrap(),
             image_run: RetainedImage::from_image_bytes(
-                "Filter",
+                "Run",
                 include_bytes!("../../resources/play.png"),
             )
             .unwrap(),
             image_directory: RetainedImage::from_image_bytes(
-                "Filter",
+                "Directory",
                 include_bytes!("../../resources/folder.png"),
             )
             .unwrap(),
             image_timer: RetainedImage::from_image_bytes(
-                "Filter",
+                "Time",
                 include_bytes!("../../resources/chronometer.png"),
             )
             .unwrap(),
             image: RetainedImage::from_image_bytes(
-                "Filter",
+                "Audio",
                 include_bytes!("../../resources/checked.png"),
             )
             .unwrap(),
-            image2: RetainedImage::from_svg_bytes(
-                "Settings",
-                include_bytes!("../../resources/settings.svg"),
+            image_delete: RetainedImage::from_image_bytes(
+                "Delete",
+                include_bytes!("../../resources/delete-3.png"),
             )
             .unwrap(),
         }
@@ -225,13 +225,19 @@ impl epi::App for Application {
         egui::TopBottomPanel::bottom("bottom_sub_panel")
             .frame(frame_style_1)
             .show(ctx, |ui| {
-                // BUTTON DELETE ROW
+
+                // BUTTON DELETE ROW 
+                let image_size = self.image_delete.size_vec2();
+                let image_button = egui::ImageButton::new(
+                    self.image_delete.texture_id(ctx),
+                    [image_size.x / 32., image_size.y / 32.],
+                )
+                .frame(true);
 
                 ui.add_visible_ui(self.show_delete_button, |ui| {
+     
                     if ui
-                        .add(egui::Button::new(
-                            egui::RichText::new("Delete Below").color(egui::Color32::LIGHT_RED), //.monospace(),
-                        ))
+                        .add(image_button)
                         .clicked()
                     {
                         // EVENT DELETE ITEMS
@@ -280,16 +286,18 @@ impl epi::App for Application {
                         for item in self.finder.data_set.iter() {
                             let (k, v) = item;
 
-                            // BUG HERE
-                            let dt = DupeTable {
-                                name: v[0].name.to_string(),
-                                count: v.len().try_into().unwrap(),
-                                checksum: k.to_string(),
-                                list: v.to_vec(),
-                                file_type: v[0].file_type,
-                                visible: true,
-                            };
-                            self.dupe_table.push(dt);
+                            if v.len() > 0 {
+                                // BUG HERE
+                                let dt = DupeTable {
+                                    name: v[0].name.to_string(),
+                                    count: v.len().try_into().unwrap(),
+                                    checksum: k.to_string(),
+                                    list: v.to_vec(),
+                                    file_type: v[0].file_type,
+                                    visible: true,
+                                };
+                                self.dupe_table.push(dt);
+                            }
                         }
 
                         // Clear staging before loading it
@@ -432,7 +440,7 @@ impl epi::App for Application {
     }
 
     fn on_exit(&mut self) {
-        println!("exiting...")
+        // DO Nothing
     }
 }
 

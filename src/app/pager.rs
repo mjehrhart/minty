@@ -3,7 +3,7 @@ use crate::enums::enums;
 
 impl Application {
     //
-    pub fn pager(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    pub fn pager(&mut self, ui: &mut egui::Ui ) {
         egui::Grid::new("grid_pager_main")
             .spacing(egui::Vec2::new(0.0, 0.0))
             .show(ui, |ui| {

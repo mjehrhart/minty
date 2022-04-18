@@ -231,7 +231,7 @@ impl Application {
             egui::TopBottomPanel::bottom("bottom_sub_panel_pager")
                 .frame(frame_style_1)
                 .show(ctx, |ui| {
-                    self::Application::pager(self, ui, ctx);
+                    self::Application::pager(self, ui );
                     ui.add_space(5.0);
                 });
         }

@@ -1,6 +1,4 @@
-use std::net::ToSocketAddrs;
-
-use egui::Color32;
+ use egui::Color32;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 
@@ -164,23 +162,19 @@ impl Application {
 
                             if self.dupe_table.len() > pager_size {
                                 let quot = self.dupe_table.len() / pager_size;
-                                let rem = self.dupe_table.len() % pager_size;
-                                // println!("quot {}", quot);
-                                // println!("rem {}", rem);
+                                //let rem = self.dupe_table.len() % pager_size;
+                         
                                 for i in 0..quot {
                                     let y = (i + 1) * pager_size;
                                     let x = y - pager_size;
-
-                                    //println!("[x..y]: [{}..{}]", x, y);
+ 
                                     let v = self.dupe_table[x..y].to_vec();
                                     self.staging.push(v.clone());
                                 }
                                 //rem
                                 {
-                                    let y = quot * pager_size;
-                                    let x = y - rem;
-
-                                    //println!("![x..y]: [{}..{}]", x, y);
+                                    let y = quot * pager_size; 
+ 
                                     let v = self.dupe_table[y..].to_vec();
                                     self.staging.push(v);
                                 }
@@ -254,7 +248,7 @@ impl Application {
 
                                 if self.dupe_table.len() > pager_size {
                                     let quot = self.dupe_table.len() / pager_size;
-                                    let rem = self.dupe_table.len() % pager_size;
+                                    //let rem = self.dupe_table.len() % pager_size;
                                 
                                     for i in 0..quot {
                                         let y = (i + 1) * pager_size;
@@ -266,7 +260,7 @@ impl Application {
                                     //rem
                                     {
                                         let y = quot * pager_size;
-                                        let x = y - rem; 
+                                        
                                         let v = self.dupe_table[y..].to_vec();
                                         self.staging.push(v);
                                     }
@@ -290,7 +284,7 @@ impl Application {
                             );
 
                             if response.changed() {
-                                println!("something has changed in fuzzy search");
+                                // DO Nothing
                             }
 
                             if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
@@ -302,7 +296,7 @@ impl Application {
                                         matcher.fuzzy_match(&collection.name, &self.fuzzy_search);
 
                                     match res {
-                                        Some(a) => {
+                                        Some(_) => {
                                             collection.visible = true;
                                         }
                                         None => {
