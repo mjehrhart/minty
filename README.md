@@ -2,9 +2,8 @@
 
 Project Minty has a new look and feel!!! 
 
-<img width="50%" alt="Screen Shot Minty" src="https://user-images.githubusercontent.com/97703291/163739271-81e09254-d7b5-4710-83f9-453cfcfb8b9a.png">
-
-
+<img width="50%" alt="minty2 0 1_1c" src="https://user-images.githubusercontent.com/97703291/163831464-334bcb27-92eb-4576-8728-5a19d5fe090d.png">
+ 
 Minty is a superb file deduplication app built in rust with a rust user interface. I say superb because it is rust on rust!.
 
 Minty uses parrellism for a speedy and safe deduplication search.  The app reads the content of each file and then compares the content to other, making for a truly reliable app.
