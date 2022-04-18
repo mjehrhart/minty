@@ -24,7 +24,7 @@ You can view all duplicate files and batch delete them for each file collection.
 #### Hombebrew
 ```
 brew tap mjehrhart/minty
-brew install/minty/minty
+brew install mjehrhart/minty/minty
 ```
 
 #### Upgrade
