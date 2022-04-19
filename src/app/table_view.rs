@@ -150,8 +150,8 @@ impl Application {
                     ScrollArea::vertical()
                         .id_source("main_scroll")
                         .auto_shrink([false, false])
-                        .max_height(500.)
-                        .min_scrolled_height(500.)
+                        .max_height(490.)
+                        .min_scrolled_height(490.)
                         .stick_to_right()
                         .show_rows(ui, row_height, number_of_rows, |ui, row_range| {
                             for row in row_range {
@@ -224,7 +224,7 @@ impl Application {
                         }); //end of scroll
 
                     let sep = egui::Separator::default();
-                    ui.add_space(5.0);
+                    //ui.add_space(5.0);
                     ui.add(sep);
                 });
 

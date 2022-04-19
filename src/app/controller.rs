@@ -5,6 +5,7 @@ use eframe::{
 };
 use egui::{Color32, ScrollArea, Sense};
 use egui_extras::RetainedImage;
+use home::home_dir;
 
 use crate::{
     enums::enums::{self, FileAction},
@@ -82,7 +83,7 @@ impl Application {
             staging: vec![],               //used in paging
             dupe_table: vec![],            //ui uses this for show and tell
             finder: finder::Finder::new(), //runs the search
-            directory: String::from("/Users/matthew/zz/file_types"),
+            directory: String::from(""),
             //
             time_elapsed: std::time::Duration::new(0, 0),
             show_filter_bar: true,
@@ -177,11 +178,13 @@ impl Application {
 
 impl epi::App for Application {
     fn name(&self) -> &str {
-        "Sandbox"
+        "Project Minty v2.0.2"
         //crate::defines::APP_NAME
     }
 
-    fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {}
+    fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
+        self.directory = home::home_dir().unwrap().as_path().display().to_string();
+    }
 
     fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
         //
@@ -225,8 +228,7 @@ impl epi::App for Application {
         egui::TopBottomPanel::bottom("bottom_sub_panel")
             .frame(frame_style_1)
             .show(ctx, |ui| {
-
-                // BUTTON DELETE ROW 
+                // BUTTON DELETE ROW
                 let image_size = self.image_delete.size_vec2();
                 let image_button = egui::ImageButton::new(
                     self.image_delete.texture_id(ctx),
@@ -235,11 +237,7 @@ impl epi::App for Application {
                 .frame(true);
 
                 ui.add_visible_ui(self.show_delete_button, |ui| {
-     
-                    if ui
-                        .add(image_button)
-                        .clicked()
-                    {
+                    if ui.add(image_button).clicked() {
                         // EVENT DELETE ITEMS
                         // Remove file from os first and then remove from vec[]
                         let collection = self
