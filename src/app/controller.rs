@@ -214,6 +214,8 @@ impl epi::App for Application {
             .frame(frame_style_1)
             .min_width(113.)
             .show(ctx, |ui| {
+                
+                self::Application::set_theme(self, ui, ctx);
                 ui.add_space(70.);
                 self::Application::left_menu(self, ui, ctx);
             });

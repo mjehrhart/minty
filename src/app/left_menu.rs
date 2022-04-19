@@ -7,15 +7,56 @@ use super::controller::Application;
 use crate::{enums::enums, finder::finder};
 
 impl Application {
+    pub fn set_theme(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        
+        ctx.set_visuals(egui::Visuals::light());
+        //let mut ctx = egui::Context::default();
+        let mut style: egui::Style = (*ctx.style()).clone();  
+        // if style.visuals.widgets.noninteractive.bg_fill == Color32::from_gray(30) { 
+        style.visuals.widgets.noninteractive.bg_fill = Color32::WHITE;
+        style.visuals.widgets.noninteractive.fg_stroke = egui::Stroke {
+            width: 1.0,
+            color: Color32::BLACK,
+        };
+
+        style.visuals.widgets.active.bg_fill = Color32::WHITE;
+        style.visuals.widgets.active.fg_stroke = egui::Stroke {
+            width: 1.0,
+            color: Color32::BLACK,
+        };
+
+        style.visuals.widgets.inactive.bg_fill = Color32::WHITE;
+        style.visuals.widgets.inactive.fg_stroke = egui::Stroke {
+            width: 1.0,
+            color: Color32::BLACK,
+        };
+        style.visuals.widgets.inactive.bg_stroke = egui::Stroke {
+            width: 1.0,
+            color:  Color32::from_rgb(70, 130, 180),
+        };
+
+        style.visuals.widgets.hovered.bg_fill = Color32::from_rgb(70, 180, 120);
+        style.visuals.widgets.hovered.fg_stroke = egui::Stroke {
+            width: 1.0,
+            color:  Color32::from_rgb(70, 130, 180),
+        }; 
+
+        style.visuals.widgets.open.bg_fill = Color32::from_rgb(70, 130, 180);
+        style.visuals.widgets.open.fg_stroke = egui::Stroke {
+            width: 1.0,
+            color: Color32::from_rgb(70, 130, 180),
+        };  
+        ctx.set_style(style);
+    }
     pub fn add_label(&mut self, ui: &mut egui::Ui, text: String) {
         ui.add(egui::Label::new(
-            egui::RichText::new(text).color(egui::Color32::from_rgb(244, 244, 244)),
+            egui::RichText::new(text).color(egui::Color32::from_rgb(255, 255, 255)),
         ));
     }
 
     pub fn add_label_with_hover(&mut self, ui: &mut egui::Ui, text: String, hover_text: String) {
         ui.add(egui::Label::new(
-            egui::RichText::new(text).color(egui::Color32::from_rgb(244, 244, 244)),
+            egui::RichText::new(text).color(egui::Color32::from_rgb(255, 255, 255)),
         ))
         .on_hover_ui(|ui| {
             ui.label(hover_text);
@@ -27,7 +68,7 @@ impl Application {
 
         audio_name
     }
- 
+
     pub fn left_menu(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         //let color32_blue = Color32::from_rgb(123, 167, 204);
         let color32_blue_2 = Color32::from_rgb(70, 130, 180);
@@ -216,7 +257,9 @@ impl Application {
             let radius = 0.43 * rect.height();
 
             ui.scope(|ui| {
-                ui.visuals_mut().override_text_color = Some(egui::Color32::from_white_alpha(100));
+                //ui.visuals_mut().override_text_color = Some(egui::Color32::from_white_alpha(100));
+                ui.add_space(3.);
+                ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(255, 255, 255));
                 ui.label(text);
             });
 
