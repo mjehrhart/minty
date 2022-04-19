@@ -33,7 +33,7 @@ impl Application {
         egui::TopBottomPanel::top("top_panel")
             .frame(frame_style_1)
             .show(ctx, |ui| {
-                //ui.group(|ui| {
+                // 
                 ui.with_layout(egui::Layout::left_to_right(), |ui| {
                     //DIRECTORY IMAGE
                     let image_size = self.image_filter.size_vec2();
@@ -102,6 +102,7 @@ impl Application {
                             self.filter_others = false;
                             self.filter_videos = false;
 
+                            // Set Filters (on/off)
                             for collection in d2.data_set.iter() {
                                 let (_, v) = collection;
 
@@ -132,9 +133,12 @@ impl Application {
                                     }
                                 }
                             }
-
+ 
                             // Assign d2
                             self.finder = d2;
+
+                            // Clear deletion panel
+                            self.sub_staging.clear();
 
                             // Load DupeTable (self.dupe_table)
                             // Clear dupe_table before loading it
@@ -152,6 +156,17 @@ impl Application {
                                 };
                                 self.dupe_table.push(dt);
                             }
+
+                            // Count number of dupes found 
+                            
+                            for collection in &self.dupe_table { 
+                                let x = collection.list.iter().filter( |&dt| dt.status == enums::enums::FileAction::Delete).count();
+                                self.number_of_duplicates += x;
+                                self.total_files_found += collection.list.len();
+
+                            } 
+                            //println!("total =>{}", self.total_files_found);
+                            //println!("self.number_of_duplicates =>{}", self.number_of_duplicates);
 
                             //// ********************************** ////
                           
@@ -221,6 +236,7 @@ impl Application {
                             self::Application::checkbox_others(self, ui, ctx);
                             self::Application::checkbox_videos(self, ui, ctx);
 
+                            ui.add_space(10.);
                             // DROPDOWN SORT BY
                             if egui::ComboBox::new("dropdown_sort_by", "")
                                 .width(100.0)

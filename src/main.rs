@@ -13,7 +13,7 @@ fn main() {
 
     let options = eframe::NativeOptions {
         resizable: true,
-        initial_window_size: Some(egui::Vec2::new(1200.0, 800.0)),
+        initial_window_size: Some(egui::Vec2::new(1180.0, 800.0)),
         decorated: true,
         transparent: true,
         ..Default::default()

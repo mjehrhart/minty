@@ -31,6 +31,8 @@ pub struct Application {
     pub finder: finder::Finder,
     pub directory: String,
     //
+    pub total_files_found: usize,
+    pub number_of_duplicates: usize,
     pub time_elapsed: std::time::Duration,
     pub show_filter_bar: bool,
     pub show_delete_button: bool,
@@ -61,7 +63,7 @@ pub struct Application {
     pub image_directory: RetainedImage,
     pub image_run: RetainedImage,
     pub image_timer: RetainedImage,
-    pub image: RetainedImage,
+    //pub image: RetainedImage,
     pub image_delete: RetainedImage,
     //
     pub sort_by: [String; 3],
@@ -85,6 +87,8 @@ impl Application {
             finder: finder::Finder::new(), //runs the search
             directory: String::from(""),
             //
+            total_files_found: 0,
+            number_of_duplicates: 0,
             time_elapsed: std::time::Duration::new(0, 0),
             show_filter_bar: true,
             show_delete_button: false,
@@ -118,27 +122,27 @@ impl Application {
             //
             image_checkbox_audios: RetainedImage::from_image_bytes(
                 "Audio_Checkbox",
-                include_bytes!("../../resources/unchecked.png"),
+                include_bytes!("../../resources/unapproved.png"),
             )
             .unwrap(),
             image_checkbox_documents: RetainedImage::from_image_bytes(
                 "Document_Checkbox",
-                include_bytes!("../../resources/checked.png"),
+                include_bytes!("../../resources/approved.png"),
             )
             .unwrap(),
             image_checkbox_images: RetainedImage::from_image_bytes(
                 "Image_Checkbox",
-                include_bytes!("../../resources/unchecked.png"),
+                include_bytes!("../../resources/unapproved.png"),
             )
             .unwrap(),
             image_checkbox_others: RetainedImage::from_image_bytes(
                 "Other_Checkbox",
-                include_bytes!("../../resources/unchecked.png"),
+                include_bytes!("../../resources/unapproved.png"),
             )
             .unwrap(),
             image_checkbox_videos: RetainedImage::from_image_bytes(
                 "Video_Checkbox",
-                include_bytes!("../../resources/unchecked.png"),
+                include_bytes!("../../resources/unapproved.png"),
             )
             .unwrap(),
             //
@@ -162,11 +166,11 @@ impl Application {
                 include_bytes!("../../resources/chronometer.png"),
             )
             .unwrap(),
-            image: RetainedImage::from_image_bytes(
-                "Audio",
-                include_bytes!("../../resources/checked.png"),
-            )
-            .unwrap(),
+            // image: RetainedImage::from_image_bytes(
+            //     "Audio",
+            //     include_bytes!("../../resources/checked.png"),
+            // )
+            // .unwrap(),
             image_delete: RetainedImage::from_image_bytes(
                 "Delete",
                 include_bytes!("../../resources/delete-3.png"),
@@ -178,12 +182,14 @@ impl Application {
 
 impl epi::App for Application {
     fn name(&self) -> &str {
-        "Project Minty v2.0.2"
-        //crate::defines::APP_NAME
+        "Project Minty v2.0.3" 
     }
 
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn Storage>) {
         self.directory = home::home_dir().unwrap().as_path().display().to_string();
+
+        // Testing
+        //self.directory = "/Users/matthew/tmp/".to_string();
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
@@ -206,17 +212,39 @@ impl epi::App for Application {
                 color: Color32::TRANSPARENT,
             },
             fill: Color32::from_rgb(49, 90, 125),
-            stroke: egui::Stroke::new(0.0, Color32::from_rgb(244, 244, 244)),
+            stroke: egui::Stroke::new(0.0, Color32::from_rgb(255, 255, 255)),
         };
 
+        let frame_style_left = egui::containers::Frame {
+            margin: egui::style::Margin {
+                left: 10.,
+                right: 2.,
+                top: 5.,
+                bottom: 2.,
+            },
+            rounding: egui::Rounding {
+                nw: 1.0,
+                ne: 1.0,
+                sw: 1.0,
+                se: 1.0,
+            },
+            shadow: eframe::epaint::Shadow {
+                extrusion: 0.0,
+                color: Color32::TRANSPARENT,
+            },
+            fill: Color32::from_rgb(70, 130, 180),
+            stroke: egui::Stroke::new(0.0, Color32::from_rgb(255, 255, 255)),
+        };
+
+ 
         // LEFT PANEL
         egui::SidePanel::left("left_panel")
-            .frame(frame_style_1)
+            .frame(frame_style_left)
             .min_width(113.)
             .show(ctx, |ui| {
                 
                 self::Application::set_theme(self, ui, ctx);
-                ui.add_space(70.);
+                ui.add_space(80.);
                 self::Application::left_menu(self, ui, ctx);
             });
 
