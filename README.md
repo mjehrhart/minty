@@ -1,4 +1,4 @@
-# minty
+# Project Minty
  
 Project Minty has a new look and feel!!! 
 
@@ -30,7 +30,7 @@ brew install mjehrhart/minty/minty
 #### Upgrade
 ```
 brew update
-brew upgrade mjehrhart/minty/minty
+brew upgrade minty
 ```
 or
 
